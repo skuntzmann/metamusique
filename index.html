@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Méta-Moteur Musical</title>
+  <title>Méta-Moteur Musical (Amélioré)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -52,61 +52,82 @@
     a:hover {
       text-decoration: underline;
     }
+    .badge {
+      font-size: 0.8em;
+      margin-left: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .free { background: #2ecc71; color: white; }
+    .paid { background: #e67e22; color: white; }
   </style>
 </head>
 <body>
 
-  <h1>🎼 Méta-Moteur Musical</h1>
-  <p>Recherchez partitions, accords, paroles et clips en un clic.</p>
+<h1>🎼 Méta-Moteur Musical (v2)</h1>
+<p>Recherchez partitions, accords, paroles et clips officiels à partir d'une œuvre.</p>
 
-  <input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon">
-  <button onclick="generateLinks()">🔍 Rechercher</button>
+<input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon">
+<button onclick="generateLinks()">🔍 Rechercher</button>
 
-  <div id="results" class="results" style="display:none;"></div>
+<div id="results" class="results" style="display:none;"></div>
 
-  <script>
-    function generateLinks() {
-      const title = document.getElementById('songTitle').value.trim();
-      const encodedTitle = encodeURIComponent(title);
-      const resultsDiv = document.getElementById('results');
+<script>
+function generateLinks() {
+  const rawTitle = document.getElementById('songTitle').value.trim();
+  if (!rawTitle) {
+    alert("Veuillez entrer un titre.");
+    return;
+  }
 
-      if (!title) {
-        alert("Veuillez entrer un titre.");
-        return;
-      }
+  const title = rawTitle;
+  const encodedTitle = encodeURIComponent(title);
+  const wikiSlug = title.replaceAll(" ", "_");
 
-      const categories = {
-        "Partitions": [
-          { label: "IMSLP (musique classique)", url: `https://www.google.com/search?q=site:imslp.org+${encodedTitle}` },
-          { label: "MuseScore", url: `https://www.google.com/search?q=site:musescore.com+${encodedTitle}+sheet+music` }
-        ],
-        "Accords / Lead Sheets": [
-          { label: "Ultimate Guitar", url: `https://www.google.com/search?q=site:ultimate-guitar.com+${encodedTitle}+chords` },
-          { label: "Chordify", url: `https://chordify.net/search/${encodedTitle}` }
-        ],
-        "Paroles": [
-          { label: "Genius", url: `https://www.google.com/search?q=site:genius.com+${encodedTitle}+lyrics` },
-          { label: "Paroles.net", url: `https://www.google.com/search?q=site:paroles.net+${encodedTitle}` }
-        ],
-        "Écoute / Clip": [
-          { label: "YouTube", url: `https://www.youtube.com/results?search_query=${encodedTitle}+clip+officiel` },
-          { label: "Spotify", url: `https://open.spotify.com/search/${encodedTitle}` },
-          { label: "Deezer", url: `https://www.deezer.com/search/${encodedTitle}` }
-        ]
-      };
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = `<h2>Résultats pour : <em>${title}</em></h2>`;
+  resultsDiv.style.display = 'block';
 
-      let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
-      for (const [cat, links] of Object.entries(categories)) {
-        html += `<div class="category"><h3>${cat}</h3>`;
-        links.forEach(l => {
-          html += `<a href="${l.url}" target="_blank">${l.label}</a>`;
-        });
-        html += `</div>`;
-      }
+  const categories = {
+    "🎼 Partition (gratuite ou libre de droit)": [
+      { label: "IMSLP (classique)", url: `https://www.google.com/search?q=site:imslp.org+${encodedTitle}`, badge: "free" },
+      { label: "MuseScore", url: `https://musescore.com/sheetmusic?text=${encodedTitle}`, badge: "mixed" },
+      { label: "8notes", url: `https://www.8notes.com/search.asp?search=${encodedTitle}`, badge: "mixed" },
+      { label: "SheetMusicPlus", url: `https://www.sheetmusicplus.com/search?Ntt=${encodedTitle}`, badge: "paid" },
+      { label: "Free-scores.com", url: `https://www.free-scores.com/recherche-partitions.php?search=${encodedTitle}`, badge: "free" }
+    ],
+    "🎸 Accords / Lead Sheets": [
+      { label: "Ultimate Guitar", url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodedTitle}`, badge: "free" },
+      { label: "Chordify", url: `https://chordify.net/search/${encodedTitle}`, badge: "free" },
+      { label: "E-Chords", url: `https://www.e-chords.com/search/all/${encodedTitle}`, badge: "mixed" }
+    ],
+    "📝 Paroles": [
+      { label: "Genius", url: `https://genius.com/search?q=${encodedTitle}`, badge: "free" },
+      { label: "Paroles.net", url: `https://www.paroles.net/recherche?q=${encodedTitle}`, badge: "free" },
+      { label: "LyricsTranslate", url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodedTitle}`, badge: "free" }
+    ],
+    "🎧 Écoute / Clip officiel": [
+      { label: "YouTube (clip)", url: `https://www.youtube.com/results?search_query=${encodedTitle}+clip+officiel`, badge: "free" },
+      { label: "Spotify", url: `https://open.spotify.com/search/${encodedTitle}`, badge: "free" },
+      { label: "Deezer", url: `https://www.deezer.com/search/${encodedTitle}`, badge: "free" },
+      { label: "Qobuz (Hi-Res, payant)", url: `https://www.qobuz.com/fr-fr/search?q=${encodedTitle}`, badge: "paid" }
+    ],
+    "📚 Wikipédia / Contexte": [
+      { label: "Wikipédia (direct)", url: `https://fr.wikipedia.org/wiki/${wikiSlug}`, badge: "free" },
+      { label: "Wikipédia (recherche)", url: `https://www.google.com/search?q=site:fr.wikipedia.org+${encodedTitle}`, badge: "free" }
+    ]
+  };
 
-      resultsDiv.innerHTML = html;
-      resultsDiv.style.display = 'block';
-    }
-  </script>
+  for (const [cat, links] of Object.entries(categories)) {
+    resultsDiv.innerHTML += `<div class="category"><h3>${cat}</h3>`;
+    links.forEach(l => {
+      const badgeClass = l.badge === 'free' ? 'free' : (l.badge === 'paid' ? 'paid' : 'mixed');
+      const badgeLabel = l.badge === 'free' ? 'gratuit' : (l.badge === 'paid' ? 'payant' : 'mixte');
+      resultsDiv.innerHTML += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+    });
+    resultsDiv.innerHTML += `</div>`;
+  }
+}
+</script>
 </body>
 </html>
