@@ -1,56 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <title>Diagnostic MuseScore Web</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
   <style>
     body {
       font-family: sans-serif;
-      background: #f4f4f4;
       margin: 0;
       padding: 2rem;
+      background: #f4f4f4;
     }
     .container {
-      max-width: 600px;
-      background: white;
+      max-width: 700px;
       margin: auto;
+      background: white;
       padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
       color: #333;
     }
     label {
-      margin-top: 1rem;
       display: block;
+      margin-top: 1rem;
     }
-    select, textarea, button {
+    input, select, textarea, button {
       width: 100%;
-      padding: 0.7rem;
+      padding: 0.8rem;
       margin-top: 0.5rem;
-      font-size: 1rem;
+      border-radius: 5px;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      font-size: 1rem;
     }
     button {
-      background-color: #007bff;
+      background: #007bff;
       color: white;
       border: none;
       margin-top: 1.5rem;
       cursor: pointer;
     }
     button:hover {
-      background-color: #0056b3;
+      background: #0056b3;
     }
     .response {
       margin-top: 2rem;
       padding: 1rem;
-      background: #e8fbe8;
+      background: #e9ffe9;
       border-left: 5px solid #28a745;
-      display: none;
     }
   </style>
 </head>
@@ -58,11 +58,11 @@
   <div class="container">
     <h1>Diagnostic MuseScore</h1>
 
-    <label for="launch">MuseScore se lance-t-il ?</label>
-    <select id="launch">
+    <label for="etat">Quand survient le problème ?</label>
+    <select id="etat">
       <option value="">-- Choisissez --</option>
-      <option value="no">Non, ne se lance pas</option>
-      <option value="yes">Oui, mais bug ensuite</option>
+      <option value="launch">Au démarrage du logiciel</option>
+      <option value="runtime">Une fois le logiciel lancé</option>
     </select>
 
     <label for="os">Système d'exploitation :</label>
@@ -74,51 +74,97 @@
     </select>
 
     <label for="message">Message d'erreur ou description :</label>
-    <textarea id="message" rows="4" placeholder="Tapez ou photographiez le message d'erreur..."></textarea>
+    <textarea id="message" rows="4" placeholder="Décrivez ou recopiez le message d’erreur…"></textarea>
+
+    <label for="image">OU prenez une photo du message :</label>
+    <input type="file" accept="image/*" onchange="lireOCR(this)" />
+    <p id="ocrStatus" style="color: gray;"></p>
 
     <button onclick="diagnostiquer()">Diagnostiquer</button>
+    <button onclick="afficherHistorique()">Voir l’historique</button>
 
-    <div class="response" id="reponse"></div>
+    <div class="response" id="reponse" style="display:none;"></div>
+    <div class="response" id="historique" style="display:none;"></div>
   </div>
 
   <script>
-    let baseErreurs = [];
-
-    fetch("errors.json")
-      .then(res => res.json())
-      .then(data => {
-        baseErreurs = data;
-      })
-      .catch(() => {
-        alert("Erreur de chargement de la base des erreurs.");
-      });
-
-    function diagnostiquer() {
-      const launch = document.getElementById('launch').value;
+    async function diagnostiquer() {
       const message = document.getElementById('message').value.toLowerCase();
-      const os = document.getElementById('os').value || "all";
+      const os = document.getElementById('os').value;
+      const etat = document.getElementById('etat').value;
+      const reponse = document.getElementById('reponse');
+      const historique = JSON.parse(localStorage.getItem("diagnostics") || "[]");
 
-      if (!launch) {
-        alert("Indiquez d’abord si MuseScore se lance.");
+      if (!message || !os || !etat) {
+        reponse.innerText = "Veuillez remplir tous les champs.";
+        reponse.style.display = "block";
         return;
       }
 
-      let type = (launch === "no") ? "launch" : "runtime";
+      let solution = "Ce message n'est pas encore reconnu. Essayez d'être plus précis ou contactez le support MuseScore.";
 
-      const correspondances = baseErreurs.filter(entry => {
-        return entry.type === type &&
-          (entry.os === os || entry.os === "all") &&
-          entry.match.some(keyword => message.includes(keyword));
-      });
+      try {
+        const res = await fetch("errors.json");
+        const data = await res.json();
 
-      const reponse = document.getElementById("reponse");
+        const result = data.find(err =>
+          err.type === etat &&
+          (err.os === os || err.os === "all") &&
+          err.match.some(keyword => message.includes(keyword.toLowerCase()))
+        );
+
+        if (result) {
+          solution = result.solution;
+        }
+      } catch (e) {
+        solution = "Erreur lors du chargement des données.";
+        console.error(e);
+      }
+
+      reponse.innerText = solution;
       reponse.style.display = "block";
 
-      if (correspondances.length > 0) {
-        reponse.innerText = correspondances[0].solution;
+      historique.push({
+        date: new Date().toISOString(),
+        message,
+        os,
+        type: etat,
+        solution
+      });
+      localStorage.setItem("diagnostics", JSON.stringify(historique));
+    }
+
+    function afficherHistorique() {
+      const histoDiv = document.getElementById('historique');
+      const data = JSON.parse(localStorage.getItem("diagnostics") || "[]");
+
+      if (data.length === 0) {
+        histoDiv.innerText = "Aucun diagnostic enregistré.";
       } else {
-        reponse.innerText = "Aucune solution trouvée. Essayez de reformuler ou contactez le support MuseScore.";
+        histoDiv.innerHTML = "<h3>Historique :</h3>" + data.map(entry =>
+          `<p><strong>${entry.date.split("T")[0]}</strong> – <em>${entry.message}</em><br/>OS : ${entry.os}, Type : ${entry.type}<br/>💡 ${entry.solution}</p>`
+        ).join("<hr>");
       }
+
+      histoDiv.style.display = 'block';
+    }
+
+    function lireOCR(input) {
+      const status = document.getElementById('ocrStatus');
+      const textarea = document.getElementById('message');
+
+      if (input.files.length === 0) return;
+
+      status.innerText = "OCR en cours...";
+      Tesseract.recognize(input.files[0], 'eng')
+        .then(result => {
+          textarea.value = result.data.text;
+          status.innerText = "Texte extrait.";
+        })
+        .catch(err => {
+          console.error(err);
+          status.innerText = "Erreur lors de l'OCR.";
+        });
     }
   </script>
 </body>
