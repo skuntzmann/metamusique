@@ -1,38 +1,50 @@
 [
   {
     "type": "launch",
-    "os": "macos",
-    "match": ["quit unexpectedly", "unexpectedly closed"],
-    "solution": "Sur macOS, supprimez ~/Library/Application Support/MuseScore puis relancez MuseScore."
+    "os": "windows",
+    "match": ["0xc000007b", "msvcp", "ucrtbase", ".dll"],
+    "solution": "Erreur au lancement : réinstallez les Visual C++ Redistributables depuis le site de Microsoft."
   },
   {
     "type": "launch",
-    "os": "windows",
-    "match": [".dll", "msvcp", "ucrtbase"],
-    "solution": "Réinstallez les Visual C++ Redistributables pour Windows depuis le site officiel de Microsoft."
+    "os": "macos",
+    "match": ["quit unexpectedly", "application closed"],
+    "solution": "MuseScore plante au démarrage sur macOS : supprimez le dossier ~/Library/Application Support/MuseScore, puis relancez."
   },
   {
-    "type": "runtime",
-    "os": "macos",
-    "match": ["permission denied"],
-    "solution": "MuseScore n’a pas les droits d’écriture. Allez dans Préférences Système > Sécurité > Accès complet au disque et ajoutez MuseScore."
+    "type": "launch",
+    "os": "linux",
+    "match": ["segfault", "core dumped"],
+    "solution": "Erreur de segmentation : installez les dépendances appropriées et lancez MuseScore avec `-F`."
   },
   {
     "type": "runtime",
     "os": "all",
-    "match": [".temp", "corrupted", "cannot save", "cannot open"],
-    "solution": "Essayez d’enregistrer la partition ailleurs (par exemple sur le Bureau) ou vérifiez que le dossier est accessible."
+    "match": ["file corrupted", "cannot open file", ".mscz~", "score invalid"],
+    "solution": "Le fichier semble corrompu : essayez d’ouvrir la sauvegarde automatique (.mscz~) ou de renommer le fichier en .zip pour extraction."
+  },
+  {
+    "type": "runtime",
+    "os": "macos",
+    "match": ["permission denied", ".temp"],
+    "solution": "Pas assez de droits : allez dans Préférences Système > Sécurité > Accès complet au disque, ajoutez MuseScore."
+  },
+  {
+    "type": "runtime",
+    "os": "windows",
+    "match": ["access is denied", "cannot save", ".mscz_saving"],
+    "solution": "Impossible d’enregistrer : essayez un autre dossier ou lancez en mode administrateur."
   },
   {
     "type": "runtime",
     "os": "linux",
     "match": ["alsa", "pulseaudio", "jack"],
-    "solution": "Problème de configuration audio. Essayez de relancer avec `-F`, ou vérifiez vos paquets audio ALSA/JACK/PulseAudio."
+    "solution": "Erreur audio : installez ou reconfigurez ALSA/PulseAudio/JACK, ou lancez MuseScore en mode sans effet avec `-F`."
   },
   {
     "type": "runtime",
     "os": "windows",
     "match": ["soundfont not found", "sf2"],
-    "solution": "Le fichier soundfont est manquant. Essayez de réinitialiser les paramètres ou de réinstaller MuseScore."
+    "solution": "SoundFont manquant : réinitialisez-le dans Préférences > I/O ou réinstallez MuseScore."
   }
 ]
