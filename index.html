@@ -2,357 +2,140 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Méta-Moteur Musical - Extraction étendue</title>
+  <title>Méta-Moteur Musical - Version GitHub Pages</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f4;
-      color: #333;
-      margin: 0; padding: 1.5em;
-    }
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-    }
+    body { font-family: 'Segoe UI', sans-serif; margin: 1em; background: #f9f9f9; color: #222; }
     input, button {
-      font-size: 1.1em;
-      padding: 0.6em;
-      margin: 0.6em 0;
+      font-size: 1em;
+      padding: 0.7em;
+      margin-bottom: 1em;
       width: 100%;
-      max-width: 600px;
+      max-width: 400px;
       box-sizing: border-box;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
     }
     button {
       background-color: #3498db;
-      border: none;
       color: white;
+      border: none;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: background-color 0.2s;
     }
     button:hover {
       background-color: #2980b9;
     }
     .results {
-      margin-top: 2em;
+      max-width: 600px;
+      margin-top: 1em;
       background: white;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-      padding: 1em;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      padding: 1em;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
-    .category {
-      margin-bottom: 1.2em;
-    }
+    h2 { margin-top: 0; }
+    .category { margin-bottom: 1em; }
     .category h3 {
-      margin-bottom: 0.5em;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 2px solid #3498db;
       padding-bottom: 0.3em;
-      color: #2c3e50;
+      margin-bottom: 0.5em;
     }
     a {
       display: block;
-      margin: 0.3em 0;
-      color: #1a1a1a;
+      margin: 4px 0;
+      color: #2c3e50;
       text-decoration: none;
-      word-break: break-word;
+      word-wrap: break-word;
     }
-    a:hover {
-      text-decoration: underline;
-    }
+    a:hover { text-decoration: underline; }
     .badge {
-      font-size: 0.75em;
+      font-size: 0.8em;
+      margin-left: 0.5em;
       padding: 2px 6px;
       border-radius: 4px;
-      margin-left: 6px;
-      font-weight: 600;
+      vertical-align: middle;
     }
-    .free {
-      background-color: #2ecc71;
-      color: white;
-    }
-    .paid {
-      background-color: #e67e22;
-      color: white;
-    }
-    .mixed {
-      background-color: #f1c40f;
-      color: #333;
-    }
-    .status {
-      text-align: center;
-      font-size: 1.1em;
-      margin-top: 1em;
-      color: #555;
-    }
+    .free { background: #2ecc71; color: white; }
+    .paid { background: #e67e22; color: white; }
+    .mixed { background: #f1c40f; color: #333; }
     @media (max-width: 600px) {
-      body {
-        padding: 1em;
-      }
-      input, button {
-        font-size: 1em;
-        max-width: 100%;
-      }
-      .results {
-        max-width: 100%;
-      }
+      body { margin: 0.5em; }
+      .results { max-width: 100%; padding: 0.5em; }
     }
   </style>
 </head>
 <body>
-  <h1>🎼 Méta-Moteur Musical - Extraction étendue</h1>
-  <input type="text" id="songTitle" placeholder="Exemple : Imagine John Lennon" />
-  <button id="searchBtn">🔍 Rechercher</button>
-  <p class="status" id="status"></p>
+  <h1>🎼 Méta-Moteur Musical (GitHub Pages)</h1>
+  <p>Entrez un titre de chanson ou d’œuvre :</p>
+
+  <input type="text" id="inputTitle" placeholder="Exemple : Imagine John Lennon" />
+  <button id="btnSearch">🔍 Rechercher</button>
   <div id="results" class="results" style="display:none;"></div>
 
-<script>
-  const resultsDiv = document.getElementById('results');
-  const statusDiv = document.getElementById('status');
-  const searchBtn = document.getElementById('searchBtn');
-
-  // Utilitaire pour fetch avec timeout
-  async function fetchWithTimeout(resource, options = {}) {
-    const { timeout = 7000 } = options;
-
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const response = await fetch(resource, {
-        ...options,
-        signal: controller.signal  
-      });
-      clearTimeout(id);
-      return response;
-    } catch (error) {
-      clearTimeout(id);
-      throw error;
+  <script>
+    function encodeQueryParam(s) {
+      return encodeURIComponent(s.trim());
     }
-  }
 
-  // Extraction de lien direct depuis MuseScore (exemple)
-  async function extractMuseScore(titleEncoded) {
-    const searchUrl = `https://musescore.com/sheetmusic?text=${titleEncoded}`;
-    try {
-      const res = await fetchWithTimeout(searchUrl);
-      if (!res.ok) throw new Error("Fetch error");
-      const text = await res.text();
-      // Recherche premier lien direct vers partition
-      // MuseScore stocke les liens dans href "/score/..."
-      const match = text.match(/href="(\/score\/[0-9]+)"/i);
-      if (match) {
-        return "https://musescore.com" + match[1];
+    const btn = document.getElementById('btnSearch');
+    const input = document.getElementById('inputTitle');
+    const resultsDiv = document.getElementById('results');
+
+    btn.onclick = () => {
+      const title = input.value.trim();
+      if (!title) {
+        alert('Veuillez saisir un titre.');
+        return;
       }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
 
-  // Extraction de lien direct paroles.net
-  async function extractParolesNet(titleEncoded) {
-    const searchUrl = `https://www.paroles.net/recherche?q=${titleEncoded}`;
-    try {
-      const res = await fetchWithTimeout(searchUrl);
-      if (!res.ok) throw new Error("Fetch error");
-      const text = await res.text();
-      // Cherche lien vers paroles en page (href="/chanson/...")
-      const match = text.match(/href="(\/chanson\/[^"]+)"/i);
-      if (match) {
-        return "https://www.paroles.net" + match[1];
+      const cleanTitle = title;
+
+      // On construit les liens
+      const results = {
+        partitions: [
+          { label: "MuseScore", badge: "mixed", url: `https://musescore.com/sheetmusic?text=${encodeQueryParam(cleanTitle)}` },
+          { label: "IMSLP", badge: "free", url: `https://imslp.org/wiki/Special:Search/${encodeQueryParam(cleanTitle)}` },
+          { label: "Free-Scores", badge: "free", url: `https://www.free-scores.com/recherche-partitions.php?search=${encodeQueryParam(cleanTitle)}` },
+          { label: "SheetMusicPlus", badge: "paid", url: `https://www.sheetmusicplus.com/search?Ntt=${encodeQueryParam(cleanTitle)}` }
+        ],
+        accords: [
+          { label: "Ultimate Guitar", badge: "free", url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodeQueryParam(cleanTitle)}` },
+          { label: "Chordify", badge: "free", url: `https://chordify.net/search/${encodeQueryParam(cleanTitle)}` },
+          { label: "E-Chords", badge: "mixed", url: `https://www.e-chords.com/search/all/${encodeQueryParam(cleanTitle)}` }
+        ],
+        paroles: [
+          { label: "Paroles.net", badge: "free", url: `https://www.paroles.net/recherche?q=${encodeQueryParam(cleanTitle)}` },
+          { label: "Genius", badge: "free", url: `https://genius.com/search?q=${encodeQueryParam(cleanTitle)}` },
+          { label: "LyricsTranslate (via Google)", badge: "free", url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodeQueryParam(cleanTitle)}` }
+        ],
+        clips: [
+          { label: "YouTube (clip officiel)", badge: "free", url: `https://www.youtube.com/results?search_query=${encodeQueryParam(cleanTitle + ' clip officiel')}` },
+          { label: "Spotify", badge: "free", url: `https://open.spotify.com/search/${encodeQueryParam(cleanTitle)}` },
+          { label: "Deezer", badge: "free", url: `https://www.deezer.com/search/${encodeQueryParam(cleanTitle)}` }
+        ]
+      };
+
+      let html = `<h2>Résultats pour : <em>${cleanTitle}</em></h2>`;
+
+      for (const category of ['partitions', 'accords', 'paroles', 'clips']) {
+        const catTitle = {
+          partitions: '🎼 Partitions',
+          accords: '🎸 Accords / Lead Sheets',
+          paroles: '📝 Paroles',
+          clips: '🎧 Clips officiels / Audio'
+        }[category];
+
+        html += `<div class="category"><h3>${catTitle}</h3>`;
+        for (const link of results[category]) {
+          const badgeClass = link.badge === 'free' ? 'free' : (link.badge === 'paid' ? 'paid' : 'mixed');
+          const badgeLabel = link.badge === 'free' ? 'gratuit' : (link.badge === 'paid' ? 'payant' : 'mixte');
+          html += `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.label}<span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+        }
+        html += `</div>`;
       }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
 
-  // Extraction paroles genius.com (avec fallback)
-  async function extractGenius(titleEncoded) {
-    const searchUrl = `https://genius.com/api/search/multi?per_page=5&q=${titleEncoded}`;
-    try {
-      // Genius bloque souvent le fetch direct, donc on renvoie juste le lien recherche
-      // Si tu as une clé API, tu peux ici faire une requête plus directe
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  // Extraction Ultimate Guitar (accords)
-  async function extractUltimateGuitar(titleEncoded) {
-    // Ultimate Guitar bloque CORS côté client,
-    // on renvoie lien recherche classique pour éviter erreur
-    return null;
-  }
-
-  // Extraction liens YouTube clip officiel (simple)
-  function youtubeClipLink(title) {
-    const q = encodeURIComponent(title + " clip officiel");
-    return `https://www.youtube.com/results?search_query=${q}`;
-  }
-
-  // Main recherche avec extraction progressive
-  async function generateLinks() {
-    const rawTitle = document.getElementById('songTitle').value.trim();
-    resultsDiv.style.display = 'none';
-    resultsDiv.innerHTML = '';
-    statusDiv.textContent = '';
-    if (!rawTitle) {
-      alert("Veuillez entrer un titre.");
-      return;
-    }
-    const title = rawTitle;
-    const titleEncoded = encodeURIComponent(title);
-
-    statusDiv.textContent = '🔄 Recherche en cours...';
-
-    // Structure des catégories avec extraction possible (fonction async) ou fallback
-    const categories = {
-      "🎼 Partitions (extraction directe prioritaire)": [
-        {
-          label: "MuseScore",
-          badge: "mixed",
-          extract: extractMuseScore,
-          fallbackUrl: `https://musescore.com/sheetmusic?text=${titleEncoded}`
-        },
-        {
-          label: "IMSLP (classique, libre de droit)",
-          badge: "free",
-          extract: null,
-          fallbackUrl: `https://imslp.org/wiki/Special:Search/${titleEncoded}`
-        },
-        {
-          label: "Free-scores.com",
-          badge: "free",
-          extract: null,
-          fallbackUrl: `https://www.free-scores.com/recherche-partitions.php?search=${titleEncoded}`
-        },
-        {
-          label: "SheetMusicPlus (payant)",
-          badge: "paid",
-          extract: null,
-          fallbackUrl: `https://www.sheetmusicplus.com/search?Ntt=${titleEncoded}`
-        }
-      ],
-      "🎸 Accords / Lead Sheets": [
-        {
-          label: "Ultimate Guitar",
-          badge: "free",
-          extract: extractUltimateGuitar,
-          fallbackUrl: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${titleEncoded}`
-        },
-        {
-          label: "Chordify",
-          badge: "free",
-          extract: null,
-          fallbackUrl: `https://chordify.net/search/${titleEncoded}`
-        },
-        {
-          label: "E-Chords",
-          badge: "mixed",
-          extract: null,
-          fallbackUrl: `https://www.e-chords.com/search/all/${titleEncoded}`
-        }
-      ],
-      "📝 Paroles": [
-        {
-          label: "Paroles.net",
-          badge: "free",
-          extract: extractParolesNet,
-          fallbackUrl: `https://www.paroles.net/recherche?q=${titleEncoded}`
-        },
-        {
-          label: "Genius (recherche classique)",
-          badge: "free",
-          extract: extractGenius,
-          fallbackUrl: `https://genius.com/search?q=${titleEncoded}`
-        },
-        {
-          label: "LyricsTranslate (via Google)",
-          badge: "free",
-          extract: null,
-          fallbackUrl: `https://www.google.com/search?q=site:lyricstranslate.com+${titleEncoded}`
-        }
-      ],
-      "🎧 Audio / Clips officiels": [
-        {
-          label: "YouTube (clip officiel)",
-          badge: "free",
-          extract: null,
-          fallbackUrl: youtubeClipLink(title)
-        },
-        {
-          label: "Spotify",
-          badge: "free",
-          extract: null,
-          fallbackUrl: `https://open.spotify.com/search/${titleEncoded}`
-        },
-        {
-          label: "Deezer",
-          badge: "free",
-          extract: null,
-          fallbackUrl: `https://www.deezer.com/search/${titleEncoded}`
-        }
-      ]
-    };
-
-    let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
-
-    // Fonction pour afficher chaque lien
-    function makeLink(label, url, badge, type) {
-      const badgeClass = badge === "free" ? "free" : badge === "paid" ? "paid" : "mixed";
-      const badgeLabel = badge === "free" ? "gratuit" : badge === "paid" ? "payant" : "mixte";
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label} <span class="badge ${badgeClass}">${badgeLabel}</span> <em style="font-weight:normal; font-size:0.8em; color:#666;">(${type})</em></a>`;
-    }
-
-    // Parcours asynchrone pour extraction progressive
-    for (const [category, sources] of Object.entries(categories)) {
-      html += `<div class="category"><h3>${category}</h3>`;
-      resultsDiv.innerHTML = html + 'Chargement en cours...';
+      resultsDiv.innerHTML = html;
       resultsDiv.style.display = 'block';
-
-      for (const source of sources) {
-        if (source.extract) {
-          // Essayer d'extraire le lien direct
-          statusDiv.textContent = `🔎 Extraction directe sur ${source.label}...`;
-          let directLink = null;
-          try {
-            directLink = await source.extract(titleEncoded);
-          } catch (e) {
-            directLink = null;
-          }
-          if (directLink) {
-            html += makeLink(source.label, directLink, source.badge, "lien direct");
-          } else {
-            html += makeLink(source.label, source.fallbackUrl, source.badge, "lien recherche");
-          }
-        } else {
-          // Pas d'extraction, lien recherche simple
-          html += makeLink(source.label, source.fallbackUrl, source.badge, "lien recherche");
-        }
-        resultsDiv.innerHTML = html; // mise à jour au fur et à mesure
-      }
-      html += "</div>";
-    }
-
-    statusDiv.textContent = "✅ Recherche terminée.";
-    resultsDiv.innerHTML = html;
-    resultsDiv.style.display = "block";
-  }
-
-  searchBtn.addEventListener('click', generateLinks);
-  document.getElementById('songTitle').addEventListener('keypress', e => {
-    if(e.key === 'Enter') {
-      generateLinks();
-    }
-  });
-</script>
+    };
+  </script>
 </body>
 </html>
