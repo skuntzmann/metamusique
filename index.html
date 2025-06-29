@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Méta-Moteur Musical (Partitions, Accords, Paroles)</title>
+  <title>Méta-Moteur Musical (v2 avec historique)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -27,21 +27,30 @@
       a {
         color: #90caf9;
       }
+      button {
+        background-color: #1a73e8;
+      }
+      button:hover {
+        background-color: #155ab6;
+      }
     }
     h1 {
       color: #2c3e50;
       text-align: center;
-      margin-bottom: 1em;
     }
     input,
     button {
       font-size: 1em;
       padding: 0.7em;
-      margin: 0.5em auto;
+      margin: 0.5em 0;
       width: 100%;
       max-width: 500px;
       box-sizing: border-box;
       display: block;
+      margin-left: auto;
+      margin-right: auto;
+      border-radius: 4px;
+      border: 1px solid #ccc;
     }
     button {
       background-color: #3498db;
@@ -49,7 +58,7 @@
       border: none;
       cursor: pointer;
       font-weight: 600;
-      border-radius: 4px;
+      transition: background-color 0.3s ease;
     }
     button:hover {
       background-color: #2980b9;
@@ -60,17 +69,17 @@
       padding: 1em;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    details.category {
+    .category {
       margin-top: 1em;
     }
-    details.category summary {
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1.1em;
+    .category h3 {
+      margin-bottom: 0.3em;
       border-bottom: 1px solid #ddd;
       padding-bottom: 0.3em;
-      outline: none;
     }
     a {
       display: block;
@@ -87,8 +96,6 @@
       margin-left: 6px;
       padding: 2px 6px;
       border-radius: 4px;
-      vertical-align: middle;
-      user-select: none;
     }
     .free {
       background: #2ecc71;
@@ -105,8 +112,44 @@
     .status {
       font-size: 0.9em;
       color: #888;
-      margin: 1em 0 0 0;
+      margin-bottom: 1em;
       text-align: center;
+    }
+    #history {
+      max-width: 500px;
+      margin: 1em auto 0 auto;
+      font-size: 0.9em;
+      color: #555;
+      text-align: center;
+    }
+    #history ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0.5em 0 1em 0;
+      display: inline-block;
+      text-align: left;
+    }
+    #history ul li {
+      margin: 4px 0;
+    }
+    #history ul li a {
+      color: #3498db;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    #history button {
+      font-size: 0.8em;
+      padding: 0.3em 0.8em;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: white;
+      color: #555;
+      cursor: pointer;
+      margin-top: 0.3em;
+      transition: background-color 0.3s ease;
+    }
+    #history button:hover {
+      background: #eee;
     }
     @media (max-width: 600px) {
       body {
@@ -119,138 +162,176 @@
         width: 100%;
         max-width: 100%;
       }
+      h1 {
+        font-size: 1.5em;
+      }
       .results {
         padding: 0.8em;
       }
-      details.category summary {
+      .category h3 {
         font-size: 1em;
+      }
+      #history {
+        font-size: 0.85em;
       }
     }
   </style>
 </head>
 <body>
-  <h1>🎼 Méta-Moteur Musical (Partitions, Accords, Paroles)</h1>
-  <input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon" />
+  <h1>🎼 Méta-Moteur Musical (v2 avec historique)</h1>
+  <p style="text-align:center;">
+    Recherchez partitions, accords et paroles à partir d'une œuvre.<br />
+    Cliquez sur un historique pour relancer la recherche.
+  </p>
+
+  <input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon" autocomplete="off" />
   <button onclick="generateLinks()">🔍 Rechercher</button>
   <p class="status" id="status"></p>
+
+  <div id="history"></div>
 
   <div id="results" class="results" style="display:none;"></div>
 
   <script>
-    function encodeQueryParam(str) {
-      return encodeURIComponent(str).replace(/%20/g, '+');
+    // Gestion historique localStorage
+    function getHistory() {
+      const h = localStorage.getItem('mm_history');
+      return h ? JSON.parse(h) : [];
+    }
+    function saveHistory(history) {
+      localStorage.setItem('mm_history', JSON.stringify(history));
+    }
+    function addToHistory(title) {
+      let history = getHistory();
+      history = history.filter((t) => t !== title);
+      history.unshift(title);
+      if (history.length > 10) history.pop();
+      saveHistory(history);
+    }
+    function displayHistory() {
+      const history = getHistory();
+      const container = document.getElementById('history');
+      if (history.length === 0) {
+        container.innerHTML = '<p><i>Aucun historique.</i></p>';
+        return;
+      }
+      container.innerHTML =
+        '<strong>Historique des recherches :</strong><ul>' +
+        history
+          .map(
+            (t) =>
+              `<li><a href="#" onclick="event.preventDefault(); searchFromHistory('${t.replace(
+                /'/g,
+                "\\'"
+              )}')">${t}</a></li>`
+          )
+          .join('') +
+        '</ul><button onclick="clearHistory()">Effacer l\'historique</button>';
+    }
+    function searchFromHistory(title) {
+      document.getElementById('songTitle').value = title;
+      generateLinks();
+    }
+    function clearHistory() {
+      localStorage.removeItem('mm_history');
+      displayHistory();
     }
 
+    // Recherche et affichage
     async function generateLinks() {
       const rawTitle = document.getElementById('songTitle').value.trim();
       const statusDiv = document.getElementById('status');
       const resultsDiv = document.getElementById('results');
-
       if (!rawTitle) {
         alert('Veuillez entrer un titre.');
         return;
       }
 
-      statusDiv.textContent = '🔄 Recherche en cours...';
+      const title = rawTitle;
+      const encodedTitle = encodeURIComponent(title);
+
       resultsDiv.style.display = 'none';
       resultsDiv.innerHTML = '';
+      statusDiv.textContent = '🔄 Recherche en cours...';
 
-      // Nettoyage du titre simple (on peut améliorer si besoin)
-      const cleanTitle = rawTitle.replace(/\s+/g, ' ').trim();
-
-      // Construction des URLs directes (là on donne accès direct au contenu, pas la recherche Google)
-      // On ne peut pas garantir que chaque lien existe, mais on donne un maximum de sources ciblées.
-
+      // Sources avec liens directs ou pages spécifiques (sans recherche Google)
       const categories = {
-        '🎼 Partitions (gratuite ou payante)': [
+        '🎼 Partition (gratuite ou libre de droit)': [
           {
-            label: 'IMSLP (musique classique, libre de droit)',
-            url: `https://imslp.org/wiki/Special:Search?search=${encodeQueryParam(
-              cleanTitle
-            )}`,
-            badge: 'free',
+            label: 'IMSLP (classique)',
+            url: `https://imslp.org/wiki/Special:Search/${encodedTitle}`,
+            badge: 'free'
           },
           {
-            label: 'MuseScore (mixte, gratuit & payant)',
-            url: `https://musescore.com/sheetmusic?text=${encodeQueryParam(cleanTitle)}`,
-            badge: 'mixed',
+            label: 'MuseScore',
+            url: `https://musescore.com/sheetmusic?text=${encodedTitle}`,
+            badge: 'mixed'
           },
           {
-            label: '8notes (mixte)',
-            url: `https://www.8notes.com/search.asp?search=${encodeQueryParam(cleanTitle)}`,
-            badge: 'mixed',
+            label: '8notes',
+            url: `https://www.8notes.com/search.asp?search=${encodedTitle}`,
+            badge: 'mixed'
           },
           {
-            label: 'SheetMusicPlus (payant)',
-            url: `https://www.sheetmusicplus.com/search?Ntt=${encodeQueryParam(cleanTitle)}`,
-            badge: 'paid',
+            label: 'SheetMusicPlus',
+            url: `https://www.sheetmusicplus.com/search?Ntt=${encodedTitle}`,
+            badge: 'paid'
           },
           {
-            label: 'Free-scores.com (gratuit)',
-            url: `https://www.free-scores.com/recherche-partitions.php?search=${encodeQueryParam(
-              cleanTitle
-            )}`,
-            badge: 'free',
+            label: 'Free-scores.com',
+            url: `https://www.free-scores.com/recherche-partitions.php?search=${encodedTitle}`,
+            badge: 'free'
           },
           {
-            label: 'Recherche Google Images (partitions)',
-            url: `https://www.google.com/search?tbm=isch&q=${encodeQueryParam(
-              cleanTitle + ' partition OR sheet music OR score'
-            )}`,
-            badge: 'free',
-          },
+            label: 'Google Images (Partitions)',
+            url: `https://www.google.com/search?tbm=isch&q=${encodedTitle}+partition`,
+            badge: 'free'
+          }
         ],
-
-        '🎸 Accords / Tablatures': [
+        '🎸 Accords / Lead Sheets': [
           {
-            label: 'Ultimate Guitar (gratuit & payant)',
-            url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodeQueryParam(
-              cleanTitle
-            )}`,
-            badge: 'mixed',
+            label: 'Ultimate Guitar',
+            url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodedTitle}`,
+            badge: 'free'
           },
           {
-            label: 'Chordify (gratuit)',
-            url: `https://chordify.net/search/${encodeQueryParam(cleanTitle)}`,
-            badge: 'free',
+            label: 'Chordify',
+            url: `https://chordify.net/search/${encodedTitle}`,
+            badge: 'free'
           },
           {
-            label: 'E-Chords (mixte)',
-            url: `https://www.e-chords.com/search/all/${encodeQueryParam(cleanTitle)}`,
-            badge: 'mixed',
-          },
+            label: 'E-Chords',
+            url: `https://www.e-chords.com/search/all/${encodedTitle}`,
+            badge: 'mixed'
+          }
         ],
-
         '📝 Paroles': [
           {
             label: 'Genius',
-            url: `https://genius.com/search?q=${encodeQueryParam(cleanTitle)}`,
-            badge: 'free',
+            url: `https://genius.com/search?q=${encodedTitle}`,
+            badge: 'free'
           },
           {
             label: 'Paroles.net',
-            url: `https://www.paroles.net/recherche?q=${encodeQueryParam(cleanTitle)}`,
-            badge: 'free',
-          },
-          {
-            label: 'LyricsTranslate (recherche Google)',
-            url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodeQueryParam(
-              cleanTitle
-            )}`,
-            badge: 'free',
-          },
-        ],
+            url: `https://www.paroles.net/recherche?q=${encodedTitle}`,
+            badge: 'free'
+          }
+        ]
       };
 
-      let html = `<h2>Résultats pour : <em>${cleanTitle}</em></h2>`;
+      let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
 
       for (const [cat, links] of Object.entries(categories)) {
-        html += `<details class="category" open><summary>${cat}</summary>`;
+        html += `<details class="category" open><summary><h3>${cat}</h3></summary>`;
         for (const l of links) {
           const badgeClass =
             l.badge === 'free' ? 'free' : l.badge === 'paid' ? 'paid' : 'mixed';
           const badgeLabel =
-            l.badge === 'free' ? 'gratuit' : l.badge === 'paid' ? 'payant' : 'mixte';
+            l.badge === 'free'
+              ? 'gratuit'
+              : l.badge === 'paid'
+              ? 'payant'
+              : 'mixte';
           html += `<a href="${l.url}" target="_blank" rel="noopener noreferrer">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
         }
         html += `</details>`;
@@ -259,7 +340,14 @@
       resultsDiv.innerHTML = html;
       resultsDiv.style.display = 'block';
       statusDiv.textContent = '✅ Résultats prêts.';
+
+      // Mise à jour de l'historique
+      addToHistory(title);
+      displayHistory();
     }
+
+    // Affiche l'historique au chargement
+    displayHistory();
   </script>
 </body>
 </html>
