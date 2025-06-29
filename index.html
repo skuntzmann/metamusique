@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: system-ui, sans-serif;
-      max-width: 700px;
+      max-width: 800px;
       margin: 2rem auto;
       padding: 1rem;
       background-color: #f8f9fa;
@@ -35,11 +35,11 @@
       background-color: #005fa3;
     }
     ul {
-      list-style: none;
-      padding: 0;
+      list-style-type: none;
+      padding-left: 0;
     }
     li {
-      margin-bottom: 1rem;
+      margin: 0.5rem 0;
     }
     a {
       color: #007acc;
@@ -52,20 +52,20 @@
       margin-top: 0.5rem;
       max-height: 80px;
     }
-    .results {
+    .section {
       margin-top: 2rem;
     }
   </style>
 </head>
 <body>
   <h1>🎵 MétaMusique</h1>
-  <p>Recherchez une œuvre ou une chanson pour trouver partitions, accords et paroles.</p>
+  <p>Recherchez une chanson ou œuvre musicale pour accéder à ses ressources légales : partitions, accords, paroles.</p>
 
-  <input type="text" id="songTitle" placeholder="Ex : Imagine, Clair de lune, Bella ciao">
+  <input type="text" id="songTitle" placeholder="Ex : Imagine, Bella Ciao, Clair de lune…">
   <button onclick="generateLinks()">Rechercher</button>
 
-  <div id="results" class="results"></div>
-  <div id="history" class="results"></div>
+  <div id="results" class="section"></div>
+  <div id="history" class="section"></div>
 
   <script>
     function generateLinks() {
@@ -73,33 +73,47 @@
       if (!title) return;
       saveToHistory(title);
 
-      const encoded = encodeURIComponent(title);
-
-      const sources = {
-        "Partitions (IMSLP, MuseScore…)":
-          `https://www.google.com/search?q=${encoded}+site:imslp.org+OR+site:musescore.com+OR+site:8notes.com+filetype:pdf`,
-        "Accords / Tablature":
-          `https://www.google.com/search?q=${encoded}+site:ultimate-guitar.com+OR+site:la-boite-a-chansons.fr`,
-        "Paroles":
-          `https://www.google.com/search?q=${encoded}+paroles+site:paroles.net+OR+site:genius.com+OR+site:lyrics.com`,
-        "Aperçu (Images de partitions)":
-          `https://www.google.com/search?tbm=isch&q=${encoded}+partition`
+      const q = encodeURIComponent(title);
+      const sections = {
+        "🎼 Partitions": {
+          "IMSLP (classique, domaine public)": `https://www.google.com/search?q=${q}+site:imslp.org`,
+          "MuseScore (communauté)": `https://www.google.com/search?q=${q}+site:musescore.com`,
+          "8notes (multi-instruments)": `https://www.google.com/search?q=${q}+site:8notes.com`,
+          "Free-scores.com": `https://www.google.com/search?q=${q}+site:free-scores.com`
+        },
+        "🎸 Accords / Tablatures": {
+          "Ultimate Guitar": `https://www.google.com/search?q=${q}+site:ultimate-guitar.com`,
+          "La Boîte à Chansons": `https://www.google.com/search?q=${q}+site:la-boite-a-chansons.fr`,
+          "GuitareTab": `https://www.google.com/search?q=${q}+site:guitaretab.com`,
+          "Chordify": `https://www.google.com/search?q=${q}+site:chordify.net`
+        },
+        "🎤 Paroles": {
+          "Paroles.net": `https://www.google.com/search?q=${q}+site:paroles.net`,
+          "Genius": `https://www.google.com/search?q=${q}+site:genius.com`,
+          "Lyrics.com": `https://www.google.com/search?q=${q}+site:lyrics.com`,
+          "LyricsTranslate": `https://www.google.com/search?q=${q}+site:lyricstranslate.com`
+        },
+        "🖼️ Aperçu image (partitions)": {
+          "Google Images": `https://www.google.com/search?tbm=isch&q=${q}+partition`
+        }
       };
 
-      let html = `<h2>Résultats pour : "${title}"</h2><ul>`;
-      for (const [label, url] of Object.entries(sources)) {
-        if (label.includes("Images")) {
-          html += `<li><strong>${label}</strong><br>
-            <a href="${url}" target="_blank">
-              <img src="https://www.google.com/s2/favicons?sz=32&domain=google.com" 
-                   alt="aperçu image" style="height:80px; border:1px solid #ccc;">
-              Voir des images
+      let html = `<h2>Résultats pour : "<em>${title}</em>"</h2>`;
+      for (const [section, links] of Object.entries(sections)) {
+        html += `<div class="section"><h3>${section}</h3><ul>`;
+        for (const [name, url] of Object.entries(links)) {
+          if (section.includes("Aperçu")) {
+            html += `<li><a href="${url}" target="_blank">
+              <img src="https://www.google.com/s2/favicons?domain=google.com" alt="aperçu image">
+              ${name}
             </a></li>`;
-        } else {
-          html += `<li><a href="${url}" target="_blank">${label}</a></li>`;
+          } else {
+            html += `<li><a href="${url}" target="_blank">${name}</a></li>`;
+          }
         }
+        html += `</ul></div>`;
       }
-      html += "</ul>";
+
       document.getElementById("results").innerHTML = html;
     }
 
