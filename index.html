@@ -1,353 +1,125 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <title>Méta-Moteur Musical (v2 avec historique)</title>
+  <title>Diagnostic MuseScore Web</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root {
-      color-scheme: light dark;
-    }
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: sans-serif;
       background: #f4f4f4;
-      color: #333;
       margin: 0;
-      padding: 2em;
+      padding: 2rem;
     }
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #121212;
-        color: #ddd;
-      }
-      .results {
-        background: #1e1e1e;
-        color: #ddd;
-      }
-      a {
-        color: #90caf9;
-      }
-      button {
-        background-color: #1a73e8;
-      }
-      button:hover {
-        background-color: #155ab6;
-      }
+    .container {
+      max-width: 600px;
+      background: white;
+      margin: auto;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h1 {
-      color: #2c3e50;
       text-align: center;
-    }
-    input,
-    button {
-      font-size: 1em;
-      padding: 0.7em;
-      margin: 0.5em 0;
-      width: 100%;
-      max-width: 500px;
-      box-sizing: border-box;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #2980b9;
-    }
-    .results {
-      margin-top: 2em;
-      background: white;
-      padding: 1em;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .category {
-      margin-top: 1em;
-    }
-    .category h3 {
-      margin-bottom: 0.3em;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 0.3em;
-    }
-    a {
-      display: block;
-      margin: 5px 0;
-      color: #2c3e50;
-      text-decoration: none;
-      word-wrap: break-word;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .badge {
-      font-size: 0.8em;
-      margin-left: 6px;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-    .free {
-      background: #2ecc71;
-      color: white;
-    }
-    .paid {
-      background: #e67e22;
-      color: white;
-    }
-    .mixed {
-      background: #f1c40f;
       color: #333;
     }
-    .status {
-      font-size: 0.9em;
-      color: #888;
-      margin-bottom: 1em;
-      text-align: center;
+    label {
+      margin-top: 1rem;
+      display: block;
     }
-    #history {
-      max-width: 500px;
-      margin: 1em auto 0 auto;
-      font-size: 0.9em;
-      color: #555;
-      text-align: center;
-    }
-    #history ul {
-      list-style: none;
-      padding-left: 0;
-      margin: 0.5em 0 1em 0;
-      display: inline-block;
-      text-align: left;
-    }
-    #history ul li {
-      margin: 4px 0;
-    }
-    #history ul li a {
-      color: #3498db;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    #history button {
-      font-size: 0.8em;
-      padding: 0.3em 0.8em;
-      border-radius: 4px;
+    select, textarea, button {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.5rem;
+      font-size: 1rem;
       border: 1px solid #ccc;
-      background: white;
-      color: #555;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      margin-top: 1.5rem;
       cursor: pointer;
-      margin-top: 0.3em;
-      transition: background-color 0.3s ease;
     }
-    #history button:hover {
-      background: #eee;
+    button:hover {
+      background-color: #0056b3;
     }
-    @media (max-width: 600px) {
-      body {
-        padding: 1em;
-      }
-      input,
-      button {
-        font-size: 1em;
-        padding: 0.6em;
-        width: 100%;
-        max-width: 100%;
-      }
-      h1 {
-        font-size: 1.5em;
-      }
-      .results {
-        padding: 0.8em;
-      }
-      .category h3 {
-        font-size: 1em;
-      }
-      #history {
-        font-size: 0.85em;
-      }
+    .response {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #e8fbe8;
+      border-left: 5px solid #28a745;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>🎼 Méta-Moteur Musical (v2 avec historique)</h1>
-  <p style="text-align:center;">
-    Recherchez partitions, accords et paroles à partir d'une œuvre.<br />
-    Cliquez sur un historique pour relancer la recherche.
-  </p>
+  <div class="container">
+    <h1>Diagnostic MuseScore</h1>
 
-  <input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon" autocomplete="off" />
-  <button onclick="generateLinks()">🔍 Rechercher</button>
-  <p class="status" id="status"></p>
+    <label for="launch">MuseScore se lance-t-il ?</label>
+    <select id="launch">
+      <option value="">-- Choisissez --</option>
+      <option value="no">Non, ne se lance pas</option>
+      <option value="yes">Oui, mais bug ensuite</option>
+    </select>
 
-  <div id="history"></div>
+    <label for="os">Système d'exploitation :</label>
+    <select id="os">
+      <option value="">-- Choisissez --</option>
+      <option value="windows">Windows</option>
+      <option value="macos">macOS</option>
+      <option value="linux">Linux</option>
+    </select>
 
-  <div id="results" class="results" style="display:none;"></div>
+    <label for="message">Message d'erreur ou description :</label>
+    <textarea id="message" rows="4" placeholder="Tapez ou photographiez le message d'erreur..."></textarea>
+
+    <button onclick="diagnostiquer()">Diagnostiquer</button>
+
+    <div class="response" id="reponse"></div>
+  </div>
 
   <script>
-    // Gestion historique localStorage
-    function getHistory() {
-      const h = localStorage.getItem('mm_history');
-      return h ? JSON.parse(h) : [];
-    }
-    function saveHistory(history) {
-      localStorage.setItem('mm_history', JSON.stringify(history));
-    }
-    function addToHistory(title) {
-      let history = getHistory();
-      history = history.filter((t) => t !== title);
-      history.unshift(title);
-      if (history.length > 10) history.pop();
-      saveHistory(history);
-    }
-    function displayHistory() {
-      const history = getHistory();
-      const container = document.getElementById('history');
-      if (history.length === 0) {
-        container.innerHTML = '<p><i>Aucun historique.</i></p>';
-        return;
-      }
-      container.innerHTML =
-        '<strong>Historique des recherches :</strong><ul>' +
-        history
-          .map(
-            (t) =>
-              `<li><a href="#" onclick="event.preventDefault(); searchFromHistory('${t.replace(
-                /'/g,
-                "\\'"
-              )}')">${t}</a></li>`
-          )
-          .join('') +
-        '</ul><button onclick="clearHistory()">Effacer l\'historique</button>';
-    }
-    function searchFromHistory(title) {
-      document.getElementById('songTitle').value = title;
-      generateLinks();
-    }
-    function clearHistory() {
-      localStorage.removeItem('mm_history');
-      displayHistory();
-    }
+    let baseErreurs = [];
 
-    // Recherche et affichage
-    async function generateLinks() {
-      const rawTitle = document.getElementById('songTitle').value.trim();
-      const statusDiv = document.getElementById('status');
-      const resultsDiv = document.getElementById('results');
-      if (!rawTitle) {
-        alert('Veuillez entrer un titre.');
+    fetch("errors.json")
+      .then(res => res.json())
+      .then(data => {
+        baseErreurs = data;
+      })
+      .catch(() => {
+        alert("Erreur de chargement de la base des erreurs.");
+      });
+
+    function diagnostiquer() {
+      const launch = document.getElementById('launch').value;
+      const message = document.getElementById('message').value.toLowerCase();
+      const os = document.getElementById('os').value || "all";
+
+      if (!launch) {
+        alert("Indiquez d’abord si MuseScore se lance.");
         return;
       }
 
-      const title = rawTitle;
-      const encodedTitle = encodeURIComponent(title);
+      let type = (launch === "no") ? "launch" : "runtime";
 
-      resultsDiv.style.display = 'none';
-      resultsDiv.innerHTML = '';
-      statusDiv.textContent = '🔄 Recherche en cours...';
+      const correspondances = baseErreurs.filter(entry => {
+        return entry.type === type &&
+          (entry.os === os || entry.os === "all") &&
+          entry.match.some(keyword => message.includes(keyword));
+      });
 
-      // Sources avec liens directs ou pages spécifiques (sans recherche Google)
-      const categories = {
-        '🎼 Partition (gratuite ou libre de droit)': [
-          {
-            label: 'IMSLP (classique)',
-            url: `https://imslp.org/wiki/Special:Search/${encodedTitle}`,
-            badge: 'free'
-          },
-          {
-            label: 'MuseScore',
-            url: `https://musescore.com/sheetmusic?text=${encodedTitle}`,
-            badge: 'mixed'
-          },
-          {
-            label: '8notes',
-            url: `https://www.8notes.com/search.asp?search=${encodedTitle}`,
-            badge: 'mixed'
-          },
-          {
-            label: 'SheetMusicPlus',
-            url: `https://www.sheetmusicplus.com/search?Ntt=${encodedTitle}`,
-            badge: 'paid'
-          },
-          {
-            label: 'Free-scores.com',
-            url: `https://www.free-scores.com/recherche-partitions.php?search=${encodedTitle}`,
-            badge: 'free'
-          },
-          {
-            label: 'Google Images (Partitions)',
-            url: `https://www.google.com/search?tbm=isch&q=${encodedTitle}+partition`,
-            badge: 'free'
-          }
-        ],
-        '🎸 Accords / Lead Sheets': [
-          {
-            label: 'Ultimate Guitar',
-            url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodedTitle}`,
-            badge: 'free'
-          },
-          {
-            label: 'Chordify',
-            url: `https://chordify.net/search/${encodedTitle}`,
-            badge: 'free'
-          },
-          {
-            label: 'E-Chords',
-            url: `https://www.e-chords.com/search/all/${encodedTitle}`,
-            badge: 'mixed'
-          }
-        ],
-        '📝 Paroles': [
-          {
-            label: 'Genius',
-            url: `https://genius.com/search?q=${encodedTitle}`,
-            badge: 'free'
-          },
-          {
-            label: 'Paroles.net',
-            url: `https://www.paroles.net/recherche?q=${encodedTitle}`,
-            badge: 'free'
-          }
-        ]
-      };
+      const reponse = document.getElementById("reponse");
+      reponse.style.display = "block";
 
-      let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
-
-      for (const [cat, links] of Object.entries(categories)) {
-        html += `<details class="category" open><summary><h3>${cat}</h3></summary>`;
-        for (const l of links) {
-          const badgeClass =
-            l.badge === 'free' ? 'free' : l.badge === 'paid' ? 'paid' : 'mixed';
-          const badgeLabel =
-            l.badge === 'free'
-              ? 'gratuit'
-              : l.badge === 'paid'
-              ? 'payant'
-              : 'mixte';
-          html += `<a href="${l.url}" target="_blank" rel="noopener noreferrer">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
-        }
-        html += `</details>`;
+      if (correspondances.length > 0) {
+        reponse.innerText = correspondances[0].solution;
+      } else {
+        reponse.innerText = "Aucune solution trouvée. Essayez de reformuler ou contactez le support MuseScore.";
       }
-
-      resultsDiv.innerHTML = html;
-      resultsDiv.style.display = 'block';
-      statusDiv.textContent = '✅ Résultats prêts.';
-
-      // Mise à jour de l'historique
-      addToHistory(title);
-      displayHistory();
     }
-
-    // Affiche l'historique au chargement
-    displayHistory();
   </script>
 </body>
 </html>
