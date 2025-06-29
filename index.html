@@ -2,10 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Méta-Moteur Musical - Version GitHub Pages</title>
+  <title>Méta-Moteur Musical - Partitions, Accords et Paroles</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 1em; background: #f9f9f9; color: #222; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 1em;
+      background: #f9f9f9;
+      color: #222;
+    }
     input, button {
       font-size: 1em;
       padding: 0.7em;
@@ -32,8 +37,12 @@
       padding: 1em;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
-    h2 { margin-top: 0; }
-    .category { margin-bottom: 1em; }
+    h2 {
+      margin-top: 0;
+    }
+    .category {
+      margin-bottom: 1em;
+    }
     .category h3 {
       border-bottom: 2px solid #3498db;
       padding-bottom: 0.3em;
@@ -46,7 +55,9 @@
       text-decoration: none;
       word-wrap: break-word;
     }
-    a:hover { text-decoration: underline; }
+    a:hover {
+      text-decoration: underline;
+    }
     .badge {
       font-size: 0.8em;
       margin-left: 0.5em;
@@ -54,21 +65,36 @@
       border-radius: 4px;
       vertical-align: middle;
     }
-    .free { background: #2ecc71; color: white; }
-    .paid { background: #e67e22; color: white; }
-    .mixed { background: #f1c40f; color: #333; }
+    .free {
+      background: #2ecc71;
+      color: white;
+    }
+    .paid {
+      background: #e67e22;
+      color: white;
+    }
+    .mixed {
+      background: #f1c40f;
+      color: #333;
+    }
     @media (max-width: 600px) {
-      body { margin: 0.5em; }
-      .results { max-width: 100%; padding: 0.5em; }
+      body {
+        margin: 0.5em;
+      }
+      .results {
+        max-width: 100%;
+        padding: 0.5em;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>🎼 Méta-Moteur Musical (GitHub Pages)</h1>
-  <p>Entrez un titre de chanson ou d’œuvre :</p>
+  <h1>🎼 Méta-Moteur Musical</h1>
+  <p>Recherchez partitions, accords/tablatures et paroles gratuitement.</p>
 
   <input type="text" id="inputTitle" placeholder="Exemple : Imagine John Lennon" />
   <button id="btnSearch">🔍 Rechercher</button>
+
   <div id="results" class="results" style="display:none;"></div>
 
   <script>
@@ -89,49 +115,56 @@
 
       const cleanTitle = title;
 
-      // On construit les liens
-      const results = {
-        partitions: [
-          { label: "MuseScore", badge: "mixed", url: `https://musescore.com/sheetmusic?text=${encodeQueryParam(cleanTitle)}` },
-          { label: "IMSLP", badge: "free", url: `https://imslp.org/wiki/Special:Search/${encodeQueryParam(cleanTitle)}` },
-          { label: "Free-Scores", badge: "free", url: `https://www.free-scores.com/recherche-partitions.php?search=${encodeQueryParam(cleanTitle)}` },
-          { label: "SheetMusicPlus", badge: "paid", url: `https://www.sheetmusicplus.com/search?Ntt=${encodeQueryParam(cleanTitle)}` }
-        ],
-        accords: [
-          { label: "Ultimate Guitar", badge: "free", url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodeQueryParam(cleanTitle)}` },
-          { label: "Chordify", badge: "free", url: `https://chordify.net/search/${encodeQueryParam(cleanTitle)}` },
-          { label: "E-Chords", badge: "mixed", url: `https://www.e-chords.com/search/all/${encodeQueryParam(cleanTitle)}` }
-        ],
-        paroles: [
-          { label: "Paroles.net", badge: "free", url: `https://www.paroles.net/recherche?q=${encodeQueryParam(cleanTitle)}` },
-          { label: "Genius", badge: "free", url: `https://genius.com/search?q=${encodeQueryParam(cleanTitle)}` },
-          { label: "LyricsTranslate (via Google)", badge: "free", url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodeQueryParam(cleanTitle)}` }
-        ],
-        clips: [
-          { label: "YouTube (clip officiel)", badge: "free", url: `https://www.youtube.com/results?search_query=${encodeQueryParam(cleanTitle + ' clip officiel')}` },
-          { label: "Spotify", badge: "free", url: `https://open.spotify.com/search/${encodeQueryParam(cleanTitle)}` },
-          { label: "Deezer", badge: "free", url: `https://www.deezer.com/search/${encodeQueryParam(cleanTitle)}` }
-        ]
-      };
+      // Liens pour partitions
+      const partitions = [
+        { label: "MuseScore", badge: "mixed", url: `https://musescore.com/sheetmusic?text=${encodeQueryParam(cleanTitle)}` },
+        { label: "IMSLP (classique, libre)", badge: "free", url: `https://imslp.org/wiki/Special:Search/${encodeQueryParam(cleanTitle)}` },
+        { label: "Free-Scores", badge: "free", url: `https://www.free-scores.com/recherche-partitions.php?search=${encodeQueryParam(cleanTitle)}` },
+        { label: "SheetMusicPlus (payant)", badge: "paid", url: `https://www.sheetmusicplus.com/search?Ntt=${encodeQueryParam(cleanTitle)}` }
+      ];
+
+      // Liens pour accords / tablatures
+      const accords = [
+        { label: "Ultimate Guitar", badge: "free", url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodeQueryParam(cleanTitle)}` },
+        { label: "Chordify", badge: "free", url: `https://chordify.net/search/${encodeQueryParam(cleanTitle)}` },
+        { label: "E-Chords", badge: "mixed", url: `https://www.e-chords.com/search/all/${encodeQueryParam(cleanTitle)}` }
+      ];
+
+      // Liens pour paroles
+      const paroles = [
+        { label: "Paroles.net", badge: "free", url: `https://www.paroles.net/recherche?q=${encodeQueryParam(cleanTitle)}` },
+        { label: "Genius", badge: "free", url: `https://genius.com/search?q=${encodeQueryParam(cleanTitle)}` },
+        { label: "LyricsTranslate (via Google)", badge: "free", url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodeQueryParam(cleanTitle)}` }
+      ];
 
       let html = `<h2>Résultats pour : <em>${cleanTitle}</em></h2>`;
 
-      for (const category of ['partitions', 'accords', 'paroles', 'clips']) {
-        const catTitle = {
-          partitions: '🎼 Partitions',
-          accords: '🎸 Accords / Lead Sheets',
-          paroles: '📝 Paroles',
-          clips: '🎧 Clips officiels / Audio'
-        }[category];
+      // Partitions (priorité)
+      html += `<div class="category"><h3>🎼 Partitions</h3>`;
+      partitions.forEach(link => {
+        const badgeClass = link.badge === 'free' ? 'free' : (link.badge === 'paid' ? 'paid' : 'mixed');
+        const badgeLabel = link.badge === 'free' ? 'gratuit' : (link.badge === 'paid' ? 'payant' : 'mixte');
+        html += `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.label}<span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+      });
+      html += `</div>`;
 
-        html += `<div class="category"><h3>${catTitle}</h3>`;
-        for (const link of results[category]) {
-          const badgeClass = link.badge === 'free' ? 'free' : (link.badge === 'paid' ? 'paid' : 'mixed');
-          const badgeLabel = link.badge === 'free' ? 'gratuit' : (link.badge === 'paid' ? 'payant' : 'mixte');
-          html += `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.label}<span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
-        }
-        html += `</div>`;
-      }
+      // Accords / tablatures (fallback)
+      html += `<div class="category"><h3>🎸 Accords / Tablatures</h3>`;
+      accords.forEach(link => {
+        const badgeClass = link.badge === 'free' ? 'free' : (link.badge === 'paid' ? 'paid' : 'mixed');
+        const badgeLabel = link.badge === 'free' ? 'gratuit' : (link.badge === 'paid' ? 'payant' : 'mixte');
+        html += `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.label}<span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+      });
+      html += `</div>`;
+
+      // Paroles
+      html += `<div class="category"><h3>📝 Paroles</h3>`;
+      paroles.forEach(link => {
+        const badgeClass = link.badge === 'free' ? 'free' : (link.badge === 'paid' ? 'paid' : 'mixed');
+        const badgeLabel = link.badge === 'free' ? 'gratuit' : (link.badge === 'paid' ? 'payant' : 'mixte');
+        html += `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.label}<span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+      });
+      html += `</div>`;
 
       resultsDiv.innerHTML = html;
       resultsDiv.style.display = 'block';
