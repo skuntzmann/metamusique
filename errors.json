@@ -1,0 +1,38 @@
+[
+  {
+    "type": "launch",
+    "os": "macos",
+    "match": ["quit unexpectedly", "unexpectedly closed"],
+    "solution": "Sur macOS, supprimez ~/Library/Application Support/MuseScore puis relancez MuseScore."
+  },
+  {
+    "type": "launch",
+    "os": "windows",
+    "match": [".dll", "msvcp", "ucrtbase"],
+    "solution": "Réinstallez les Visual C++ Redistributables pour Windows depuis le site officiel de Microsoft."
+  },
+  {
+    "type": "runtime",
+    "os": "macos",
+    "match": ["permission denied"],
+    "solution": "MuseScore n’a pas les droits d’écriture. Allez dans Préférences Système > Sécurité > Accès complet au disque et ajoutez MuseScore."
+  },
+  {
+    "type": "runtime",
+    "os": "all",
+    "match": [".temp", "corrupted", "cannot save", "cannot open"],
+    "solution": "Essayez d’enregistrer la partition ailleurs (par exemple sur le Bureau) ou vérifiez que le dossier est accessible."
+  },
+  {
+    "type": "runtime",
+    "os": "linux",
+    "match": ["alsa", "pulseaudio", "jack"],
+    "solution": "Problème de configuration audio. Essayez de relancer avec `-F`, ou vérifiez vos paquets audio ALSA/JACK/PulseAudio."
+  },
+  {
+    "type": "runtime",
+    "os": "windows",
+    "match": ["soundfont not found", "sf2"],
+    "solution": "Le fichier soundfont est manquant. Essayez de réinitialiser les paramètres ou de réinstaller MuseScore."
+  }
+]
