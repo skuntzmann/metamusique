@@ -4,65 +4,31 @@
   <meta charset="UTF-8" />
   <title>Diagnostic MuseScore Web</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 2rem;
-      background: #f4f4f4;
+    body { font-family: sans-serif; padding: 2rem; background: #f0f0f0; }
+    .container { background: white; padding: 2rem; max-width: 700px; margin: auto; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; }
+    textarea, select, input, button {
+      width: 100%; padding: 0.7rem; margin-top: 0.7rem; font-size: 1rem;
+      border-radius: 5px; border: 1px solid #ccc;
     }
-    .container {
-      max-width: 700px;
-      margin: auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    label {
-      display: block;
-      margin-top: 1rem;
-    }
-    input, select, textarea, button {
-      width: 100%;
-      padding: 0.8rem;
-      margin-top: 0.5rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      margin-top: 1.5rem;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    .response {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #e9ffe9;
-      border-left: 5px solid #28a745;
-    }
+    button { background-color: #007bff; color: white; border: none; margin-top: 1rem; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    .response, .history, .help { margin-top: 2rem; }
+    .response { background: #e9ffe9; border-left: 5px solid #28a745; padding: 1rem; }
+    .history-entry { background: #f9f9f9; border: 1px solid #ccc; padding: 0.8rem; margin-bottom: 0.5rem; border-radius: 5px; }
+    #video { max-width: 100%; display: none; margin-top: 1rem; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Diagnostic MuseScore</h1>
 
-    <label for="etat">Quand survient le problème ?</label>
-    <select id="etat">
+    <label>Le logiciel MuseScore se lance-t-il ?</label>
+    <select id="startup">
       <option value="">-- Choisissez --</option>
-      <option value="launch">Au démarrage du logiciel</option>
-      <option value="runtime">Une fois le logiciel lancé</option>
+      <option value="non">Non, il ne se lance pas</option>
+      <option value="oui">Oui, il se lance mais il y a un problème</option>
     </select>
 
     <label for="os">Système d'exploitation :</label>
@@ -73,98 +39,99 @@
       <option value="linux">Linux</option>
     </select>
 
-    <label for="message">Message d'erreur ou description :</label>
-    <textarea id="message" rows="4" placeholder="Décrivez ou recopiez le message d’erreur…"></textarea>
-
-    <label for="image">OU prenez une photo du message :</label>
-    <input type="file" accept="image/*" onchange="lireOCR(this)" />
-    <p id="ocrStatus" style="color: gray;"></p>
+    <label for="message">Message d'erreur ou description du problème :</label>
+    <textarea id="message" rows="4" placeholder="Décrivez ou saisissez le message d'erreur..."></textarea>
 
     <button onclick="diagnostiquer()">Diagnostiquer</button>
-    <button onclick="afficherHistorique()">Voir l’historique</button>
+    <button onclick="startOCR()">📷 Lire depuis la caméra (OCR)</button>
+
+    <video id="video" autoplay></video>
 
     <div class="response" id="reponse" style="display:none;"></div>
-    <div class="response" id="historique" style="display:none;"></div>
+
+    <div class="history" id="historique">
+      <h3>Historique des diagnostics</h3>
+      <div id="history-list"></div>
+    </div>
+
+    <div class="help">
+      <h3>📦 Fichier de diagnostic MuseScore</h3>
+      <p>Vous pouvez extraire des fichiers de log détaillés depuis MuseScore :</p>
+      <ol>
+        <li>Menu <strong>Aide</strong> → <strong>Diagnostic</strong> → <strong>Enregistrer les fichiers de diagnostic</strong></li>
+        <li>Un fichier <code>.zip</code> est généré</li>
+        <li>Vous pouvez l’analyser ou l’envoyer au support</li>
+      </ol>
+    </div>
   </div>
 
   <script>
-    async function diagnostiquer() {
-      const message = document.getElementById('message').value.toLowerCase();
-      const os = document.getElementById('os').value;
-      const etat = document.getElementById('etat').value;
-      const reponse = document.getElementById('reponse');
-      const historique = JSON.parse(localStorage.getItem("diagnostics") || "[]");
+    let baseErreurs = [];
 
-      if (!message || !os || !etat) {
-        reponse.innerText = "Veuillez remplir tous les champs.";
-        reponse.style.display = "block";
-        return;
-      }
+    // Charger la base JSON depuis errors.json
+    fetch("errors.json")
+      .then(res => res.json())
+      .then(data => baseErreurs = data);
 
-      let solution = "Ce message n'est pas encore reconnu. Essayez d'être plus précis ou contactez le support MuseScore.";
+    function diagnostiquer() {
+      const os = document.getElementById("os").value;
+      const startup = document.getElementById("startup").value;
+      const message = document.getElementById("message").value.toLowerCase();
+      const reponse = document.getElementById("reponse");
+      const history = document.getElementById("history-list");
 
-      try {
-        const res = await fetch("errors.json");
-        const data = await res.json();
+      let result = "Message non reconnu. Essayez de le reformuler ou d'envoyer les logs via MuseScore.";
 
-        const result = data.find(err =>
-          err.type === etat &&
-          (err.os === os || err.os === "all") &&
-          err.match.some(keyword => message.includes(keyword.toLowerCase()))
-        );
-
-        if (result) {
-          solution = result.solution;
+      for (const err of baseErreurs) {
+        const osMatch = err.os === "all" || err.os === os;
+        const typeMatch = (startup === "non" && err.type === "launch") || (startup === "oui" && err.type === "runtime");
+        const msgMatch = err.match.some(fragment => message.includes(fragment));
+        if (osMatch && typeMatch && msgMatch) {
+          result = err.solution;
+          break;
         }
-      } catch (e) {
-        solution = "Erreur lors du chargement des données.";
-        console.error(e);
       }
 
-      reponse.innerText = solution;
-      reponse.style.display = "block";
+      // Afficher
+      reponse.style.display = 'block';
+      reponse.innerText = result;
 
-      historique.push({
-        date: new Date().toISOString(),
-        message,
-        os,
-        type: etat,
-        solution
-      });
-      localStorage.setItem("diagnostics", JSON.stringify(historique));
+      // Sauvegarder dans l’historique
+      const entry = { date: new Date().toLocaleString(), os, startup, message, result };
+      const historyData = JSON.parse(localStorage.getItem("history") || "[]");
+      historyData.unshift(entry);
+      localStorage.setItem("history", JSON.stringify(historyData));
+      afficherHistorique();
     }
 
     function afficherHistorique() {
-      const histoDiv = document.getElementById('historique');
-      const data = JSON.parse(localStorage.getItem("diagnostics") || "[]");
-
-      if (data.length === 0) {
-        histoDiv.innerText = "Aucun diagnostic enregistré.";
-      } else {
-        histoDiv.innerHTML = "<h3>Historique :</h3>" + data.map(entry =>
-          `<p><strong>${entry.date.split("T")[0]}</strong> – <em>${entry.message}</em><br/>OS : ${entry.os}, Type : ${entry.type}<br/>💡 ${entry.solution}</p>`
-        ).join("<hr>");
-      }
-
-      histoDiv.style.display = 'block';
+      const history = JSON.parse(localStorage.getItem("history") || "[]");
+      const historyDiv = document.getElementById("history-list");
+      historyDiv.innerHTML = "";
+      history.forEach(entry => {
+        const div = document.createElement("div");
+        div.className = "history-entry";
+        div.innerHTML = `<strong>${entry.date}</strong><br/>
+        <em>${entry.startup}, ${entry.os}</em><br/>
+        <strong>Message :</strong> ${entry.message}<br/>
+        <strong>Diagnostic :</strong> ${entry.result}`;
+        historyDiv.appendChild(div);
+      });
     }
 
-    function lireOCR(input) {
-      const status = document.getElementById('ocrStatus');
-      const textarea = document.getElementById('message');
+    afficherHistorique();
 
-      if (input.files.length === 0) return;
-
-      status.innerText = "OCR en cours...";
-      Tesseract.recognize(input.files[0], 'eng')
-        .then(result => {
-          textarea.value = result.data.text;
-          status.innerText = "Texte extrait.";
-        })
-        .catch(err => {
-          console.error(err);
-          status.innerText = "Erreur lors de l'OCR.";
-        });
+    // OCR via caméra
+    async function startOCR() {
+      const video = document.getElementById("video");
+      video.style.display = 'block';
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        alert("L'OCR sera intégré prochainement ici (version Flutter mobile déjà OK).");
+      } catch (e) {
+        alert("Impossible d'accéder à la caméra.");
+      }
     }
   </script>
 </body>
