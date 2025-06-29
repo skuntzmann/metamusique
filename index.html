@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Méta-Moteur Musical (Amélioré)</title>
+  <title>Méta-Moteur Musical (v2 enrichi)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -60,21 +60,26 @@
     }
     .free { background: #2ecc71; color: white; }
     .paid { background: #e67e22; color: white; }
+    .mixed { background: #f1c40f; color: #333; }
+    .status { font-size: 0.9em; color: #888; margin-bottom: 1em; }
   </style>
 </head>
 <body>
 
-<h1>🎼 Méta-Moteur Musical (v2)</h1>
+<h1>🎼 Méta-Moteur Musical (v2 enrichi)</h1>
 <p>Recherchez partitions, accords, paroles et clips officiels à partir d'une œuvre.</p>
 
 <input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon">
 <button onclick="generateLinks()">🔍 Rechercher</button>
+<p class="status" id="status"></p>
 
 <div id="results" class="results" style="display:none;"></div>
 
 <script>
-function generateLinks() {
+async function generateLinks() {
   const rawTitle = document.getElementById('songTitle').value.trim();
+  const statusDiv = document.getElementById('status');
+  const resultsDiv = document.getElementById('results');
   if (!rawTitle) {
     alert("Veuillez entrer un titre.");
     return;
@@ -83,14 +88,13 @@ function generateLinks() {
   const title = rawTitle;
   const encodedTitle = encodeURIComponent(title);
   const wikiSlug = title.replaceAll(" ", "_");
-
-  const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML = `<h2>Résultats pour : <em>${title}</em></h2>`;
-  resultsDiv.style.display = 'block';
+  resultsDiv.style.display = 'none';
+  resultsDiv.innerHTML = '';
+  statusDiv.textContent = '🔄 Recherche en cours...';
 
   const categories = {
     "🎼 Partition (gratuite ou libre de droit)": [
-      { label: "IMSLP (classique)", url: `https://www.google.com/search?q=site:imslp.org+${encodedTitle}`, badge: "free" },
+      { label: "IMSLP (classique)", url: `https://imslp.org/wiki/Special:Search/${encodedTitle}`, badge: "free" },
       { label: "MuseScore", url: `https://musescore.com/sheetmusic?text=${encodedTitle}`, badge: "mixed" },
       { label: "8notes", url: `https://www.8notes.com/search.asp?search=${encodedTitle}`, badge: "mixed" },
       { label: "SheetMusicPlus", url: `https://www.sheetmusicplus.com/search?Ntt=${encodedTitle}`, badge: "paid" },
@@ -113,20 +117,34 @@ function generateLinks() {
       { label: "Qobuz (Hi-Res, payant)", url: `https://www.qobuz.com/fr-fr/search?q=${encodedTitle}`, badge: "paid" }
     ],
     "📚 Wikipédia / Contexte": [
-      { label: "Wikipédia (direct)", url: `https://fr.wikipedia.org/wiki/${wikiSlug}`, badge: "free" },
+      { label: "Wikipédia (direct)", url: `https://fr.wikipedia.org/wiki/${wikiSlug}`, badge: "free", verify: true },
       { label: "Wikipédia (recherche)", url: `https://www.google.com/search?q=site:fr.wikipedia.org+${encodedTitle}`, badge: "free" }
     ]
   };
 
+  let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
+
   for (const [cat, links] of Object.entries(categories)) {
-    resultsDiv.innerHTML += `<div class="category"><h3>${cat}</h3>`;
-    links.forEach(l => {
+    html += `<div class="category"><h3>${cat}</h3>`;
+    for (const l of links) {
+      if (l.verify) {
+        try {
+          const res = await fetch(l.url, { method: 'HEAD' });
+          if (!res.ok) continue;
+        } catch (e) {
+          continue;
+        }
+      }
       const badgeClass = l.badge === 'free' ? 'free' : (l.badge === 'paid' ? 'paid' : 'mixed');
       const badgeLabel = l.badge === 'free' ? 'gratuit' : (l.badge === 'paid' ? 'payant' : 'mixte');
-      resultsDiv.innerHTML += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
-    });
-    resultsDiv.innerHTML += `</div>`;
+      html += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+    }
+    html += `</div>`;
   }
+
+  resultsDiv.innerHTML = html;
+  resultsDiv.style.display = 'block';
+  statusDiv.textContent = '✅ Résultats prêts.';
 }
 </script>
 </body>
