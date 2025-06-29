@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Méta-Moteur Musical (v2 enrichi)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
       color-scheme: light dark;
@@ -24,10 +24,15 @@
         background: #1e1e1e;
         color: #ddd;
       }
-      a { color: #90caf9; }
+      a {
+        color: #90caf9;
+      }
     }
-    h1 { color: #2c3e50; }
-    input, button {
+    h1 {
+      color: #2c3e50;
+    }
+    input,
+    button {
       font-size: 1em;
       padding: 0.7em;
       margin: 0.5em 0;
@@ -41,13 +46,15 @@
       border: none;
       cursor: pointer;
     }
-    button:hover { background-color: #2980b9; }
+    button:hover {
+      background-color: #2980b9;
+    }
     .results {
       margin-top: 2em;
       background: white;
       padding: 1em;
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     .category {
       margin-top: 1em;
@@ -73,16 +80,30 @@
       padding: 2px 6px;
       border-radius: 4px;
     }
-    .free { background: #2ecc71; color: white; }
-    .paid { background: #e67e22; color: white; }
-    .mixed { background: #f1c40f; color: #333; }
-    .status { font-size: 0.9em; color: #888; margin-bottom: 1em; }
+    .free {
+      background: #2ecc71;
+      color: white;
+    }
+    .paid {
+      background: #e67e22;
+      color: white;
+    }
+    .mixed {
+      background: #f1c40f;
+      color: #333;
+    }
+    .status {
+      font-size: 0.9em;
+      color: #888;
+      margin-bottom: 1em;
+    }
 
     @media (max-width: 600px) {
       body {
         padding: 1em;
       }
-      input, button {
+      input,
+      button {
         font-size: 1em;
         padding: 0.6em;
         width: 100%;
@@ -102,87 +123,217 @@
   </style>
 </head>
 <body>
+  <h1>🎼 Méta-Moteur Musical (v2 enrichi)</h1>
+  <p>Recherchez partitions, accords, paroles et clips officiels à partir d'une œuvre.</p>
 
-<h1>🎼 Méta-Moteur Musical (v2 enrichi)</h1>
-<p>Recherchez partitions, accords, paroles et clips officiels à partir d'une œuvre.</p>
+  <input
+    type="text"
+    id="songTitle"
+    placeholder="Exemple : Imagine de John Lennon"
+  />
+  <button onclick="generateLinks()">🔍 Rechercher</button>
+  <p class="status" id="status"></p>
 
-<input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon">
-<button onclick="generateLinks()">🔍 Rechercher</button>
-<p class="status" id="status"></p>
+  <div id="results" class="results" style="display: none"></div>
 
-<div id="results" class="results" style="display:none;"></div>
-
-<script>
-async function generateLinks() {
-  const rawTitle = document.getElementById('songTitle').value.trim();
-  const statusDiv = document.getElementById('status');
-  const resultsDiv = document.getElementById('results');
-  if (!rawTitle) {
-    alert("Veuillez entrer un titre.");
-    return;
-  }
-
-  const title = rawTitle;
-  const encodedTitle = encodeURIComponent(title);
-  const wikiSlug = title.replaceAll(" ", "_");
-  resultsDiv.style.display = 'none';
-  resultsDiv.innerHTML = '';
-  statusDiv.textContent = '🔄 Recherche en cours...';
-
-  const categories = {
-    "🎼 Partition (gratuite ou libre de droit)": [
-      { label: "IMSLP (classique)", url: `https://imslp.org/wiki/Special:Search/${encodedTitle}`, badge: "free" },
-      { label: "MuseScore", url: `https://musescore.com/sheetmusic?text=${encodedTitle}`, badge: "mixed" },
-      { label: "8notes", url: `https://www.8notes.com/search.asp?search=${encodedTitle}`, badge: "mixed" },
-      { label: "SheetMusicPlus", url: `https://www.sheetmusicplus.com/search?Ntt=${encodedTitle}`, badge: "paid" },
-      { label: "Free-scores.com", url: `https://www.free-scores.com/recherche-partitions.php?search=${encodedTitle}`, badge: "free" }
-    ],
-    "🎸 Accords / Lead Sheets": [
-      { label: "Ultimate Guitar", url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodedTitle}`, badge: "free" },
-      { label: "Chordify", url: `https://chordify.net/search/${encodedTitle}`, badge: "free" },
-      { label: "E-Chords", url: `https://www.e-chords.com/search/all/${encodedTitle}`, badge: "mixed" }
-    ],
-    "📝 Paroles": [
-      { label: "Genius", url: `https://genius.com/search?q=${encodedTitle}`, badge: "free" },
-      { label: "Paroles.net", url: `https://www.paroles.net/recherche?q=${encodedTitle}`, badge: "free" },
-      { label: "LyricsTranslate", url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodedTitle}`, badge: "free" }
-    ],
-    "🎧 Écoute / Clip officiel": [
-      { label: "YouTube (clip)", url: `https://www.youtube.com/results?search_query=${encodedTitle}+clip+officiel`, badge: "free" },
-      { label: "Spotify", url: `https://open.spotify.com/search/${encodedTitle}`, badge: "free" },
-      { label: "Deezer", url: `https://www.deezer.com/search/${encodedTitle}`, badge: "free" },
-      { label: "Qobuz (Hi-Res, payant)", url: `https://www.qobuz.com/fr-fr/search?q=${encodedTitle}`, badge: "paid" }
-    ],
-    "📚 Wikipédia / Contexte": [
-      { label: "Wikipédia (direct)", url: `https://fr.wikipedia.org/wiki/${wikiSlug}`, badge: "free", verify: true },
-      { label: "Wikipédia (recherche)", url: `https://www.google.com/search?q=site:fr.wikipedia.org+${encodedTitle}`, badge: "free" }
-    ]
-  };
-
-  let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
-
-  for (const [cat, links] of Object.entries(categories)) {
-    html += `<details class="category" open><summary><h3>${cat}</h3></summary>`;
-    for (const l of links) {
-      if (l.verify) {
-        try {
-          const res = await fetch(l.url, { method: 'HEAD' });
-          if (!res.ok) continue;
-        } catch (e) {
-          continue;
+  <script>
+    async function fetchFirstLinkFromPage(url, selector) {
+      try {
+        const res = await fetch(url, { mode: 'cors' });
+        if (!res.ok) return null;
+        const text = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        const linkElement = doc.querySelector(selector);
+        if (linkElement) {
+          let href = linkElement.href || linkElement.getAttribute('href');
+          if (href && href.startsWith('/')) {
+            const baseUrl = new URL(url).origin;
+            href = baseUrl + href;
+          }
+          return href;
         }
+      } catch (e) {
+        console.warn('Erreur fetchFirstLinkFromPage:', e);
+        return null;
       }
-      const badgeClass = l.badge === 'free' ? 'free' : (l.badge === 'paid' ? 'paid' : 'mixed');
-      const badgeLabel = l.badge === 'free' ? 'gratuit' : (l.badge === 'paid' ? 'payant' : 'mixte');
-      html += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+      return null;
     }
-    html += `</details>`;
-  }
 
-  resultsDiv.innerHTML = html;
-  resultsDiv.style.display = 'block';
-  statusDiv.textContent = '✅ Résultats prêts.';
-}
-</script>
+    async function checkUrlExists(url) {
+      try {
+        const res = await fetch(url, { method: 'HEAD' });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    async function generateLinks() {
+      const rawTitle = document.getElementById('songTitle').value.trim();
+      const statusDiv = document.getElementById('status');
+      const resultsDiv = document.getElementById('results');
+
+      if (!rawTitle) {
+        alert('Veuillez entrer un titre.');
+        return;
+      }
+
+      const title = rawTitle;
+      const encodedTitle = encodeURIComponent(title);
+      const wikiSlug = title.replaceAll(' ', '_');
+      resultsDiv.style.display = 'none';
+      resultsDiv.innerHTML = '';
+      statusDiv.textContent = '🔄 Recherche en cours...';
+
+      const categories = {
+        '🎼 Partition (gratuite ou libre de droit)': [
+          {
+            label: 'IMSLP (classique)',
+            url: `https://imslp.org/wiki/Special:Search/${encodedTitle}`,
+            badge: 'free',
+          },
+          {
+            label: 'MuseScore',
+            url: `https://musescore.com/sheetmusic?text=${encodedTitle}`,
+            badge: 'mixed',
+            tryDirect: true,
+            selector: '.js-song-link',
+          },
+          {
+            label: '8notes',
+            url: `https://www.8notes.com/search.asp?search=${encodedTitle}`,
+            badge: 'mixed',
+          },
+          {
+            label: 'SheetMusicPlus',
+            url: `https://www.sheetmusicplus.com/search?Ntt=${encodedTitle}`,
+            badge: 'paid',
+          },
+          {
+            label: 'Free-scores.com',
+            url: `https://www.free-scores.com/recherche-partitions.php?search=${encodedTitle}`,
+            badge: 'free',
+          },
+        ],
+        '🎸 Accords / Lead Sheets': [
+          {
+            label: 'Ultimate Guitar',
+            url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodedTitle}`,
+            badge: 'free',
+          },
+          {
+            label: 'Chordify',
+            url: `https://chordify.net/search/${encodedTitle}`,
+            badge: 'free',
+          },
+          {
+            label: 'E-Chords',
+            url: `https://www.e-chords.com/search/all/${encodedTitle}`,
+            badge: 'mixed',
+          },
+        ],
+        '📝 Paroles': [
+          {
+            label: 'Genius',
+            url: `https://genius.com/search?q=${encodedTitle}`,
+            badge: 'free',
+            tryDirect: true,
+            selector: '.mini_card a',
+          },
+          {
+            label: 'Paroles.net',
+            url: `https://www.paroles.net/recherche?q=${encodedTitle}`,
+            badge: 'free',
+          },
+          {
+            label: 'LyricsTranslate',
+            url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodedTitle}`,
+            badge: 'free',
+          },
+        ],
+        '🎧 Écoute / Clip officiel': [
+          {
+            label: 'YouTube (clip)',
+            url: `https://www.youtube.com/results?search_query=${encodedTitle}+clip+officiel`,
+            badge: 'free',
+          },
+          {
+            label: 'Spotify',
+            url: `https://open.spotify.com/search/${encodedTitle}`,
+            badge: 'free',
+          },
+          {
+            label: 'Deezer',
+            url: `https://www.deezer.com/search/${encodedTitle}`,
+            badge: 'free',
+          },
+          {
+            label: 'Qobuz (Hi-Res, payant)',
+            url: `https://www.qobuz.com/fr-fr/search?q=${encodedTitle}`,
+            badge: 'paid',
+          },
+        ],
+        '📚 Wikipédia / Contexte': [
+          {
+            label: 'Wikipédia (direct)',
+            url: `https://fr.wikipedia.org/wiki/${wikiSlug}`,
+            badge: 'free',
+            verify: true,
+          },
+          {
+            label: 'Wikipédia (recherche)',
+            url: `https://www.google.com/search?q=site:fr.wikipedia.org+${encodedTitle}`,
+            badge: 'free',
+          },
+        ],
+      };
+
+      let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
+
+      for (const [cat, links] of Object.entries(categories)) {
+        html += `<details class="category" open><summary><h3>${cat}</h3></summary>`;
+
+        for (const l of links) {
+          let linkUrl = l.url;
+
+          if (l.tryDirect) {
+            statusDiv.textContent = `🔄 Extraction du lien direct sur ${l.label}...`;
+            const directLink = await fetchFirstLinkFromPage(l.url, l.selector);
+            if (directLink) {
+              linkUrl = directLink;
+            }
+          }
+
+          if (l.verify) {
+            statusDiv.textContent = `🔄 Vérification de l'existence sur ${l.label}...`;
+            const exists = await checkUrlExists(linkUrl);
+            if (!exists) {
+              // Si page absente, on met un message et on n'affiche pas le lien
+              html += `<p><em>Page Wikipédia introuvable pour <strong>${title}</strong>.</em></p>`;
+              continue;
+            }
+          }
+
+          const badgeClass =
+            l.badge === 'free'
+              ? 'free'
+              : l.badge === 'paid'
+              ? 'paid'
+              : 'mixed';
+          const badgeLabel =
+            l.badge === 'free' ? 'gratuit' : l.badge === 'paid' ? 'payant' : 'mixte';
+
+          html += `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+        }
+
+        html += '</details>';
+      }
+
+      resultsDiv.innerHTML = html;
+      resultsDiv.style.display = 'block';
+      statusDiv.textContent = '✅ Résultats prêts.';
+    }
+  </script>
 </body>
 </html>
