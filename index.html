@@ -1,138 +1,188 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Diagnostic MuseScore Web</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>Méta-Moteur Musical (v2 enrichi)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: sans-serif; padding: 2rem; background: #f0f0f0; }
-    .container { background: white; padding: 2rem; max-width: 700px; margin: auto; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1 { text-align: center; }
-    textarea, select, input, button {
-      width: 100%; padding: 0.7rem; margin-top: 0.7rem; font-size: 1rem;
-      border-radius: 5px; border: 1px solid #ccc;
+    :root {
+      color-scheme: light dark;
     }
-    button { background-color: #007bff; color: white; border: none; margin-top: 1rem; cursor: pointer; }
-    button:hover { background-color: #0056b3; }
-    .response, .history, .help { margin-top: 2rem; }
-    .response { background: #e9ffe9; border-left: 5px solid #28a745; padding: 1rem; }
-    .history-entry { background: #f9f9f9; border: 1px solid #ccc; padding: 0.8rem; margin-bottom: 0.5rem; border-radius: 5px; }
-    #video { max-width: 100%; display: none; margin-top: 1rem; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 2em;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #121212;
+        color: #ddd;
+      }
+      .results {
+        background: #1e1e1e;
+        color: #ddd;
+      }
+      a { color: #90caf9; }
+    }
+    h1 { color: #2c3e50; }
+    input, button {
+      font-size: 1em;
+      padding: 0.7em;
+      margin: 0.5em 0;
+      width: 100%;
+      max-width: 500px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background-color: #2980b9; }
+    .results {
+      margin-top: 2em;
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .category {
+      margin-top: 1em;
+    }
+    .category h3 {
+      margin-bottom: 0.3em;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 0.3em;
+    }
+    a {
+      display: block;
+      margin: 5px 0;
+      color: #2c3e50;
+      text-decoration: none;
+      word-wrap: break-word;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .badge {
+      font-size: 0.8em;
+      margin-left: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .free { background: #2ecc71; color: white; }
+    .paid { background: #e67e22; color: white; }
+    .mixed { background: #f1c40f; color: #333; }
+    .status { font-size: 0.9em; color: #888; margin-bottom: 1em; }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 1em;
+      }
+      input, button {
+        font-size: 1em;
+        padding: 0.6em;
+        width: 100%;
+        max-width: 100%;
+      }
+      h1 {
+        font-size: 1.5em;
+        text-align: center;
+      }
+      .results {
+        padding: 0.8em;
+      }
+      .category h3 {
+        font-size: 1em;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Diagnostic MuseScore</h1>
 
-    <label>Le logiciel MuseScore se lance-t-il ?</label>
-    <select id="startup">
-      <option value="">-- Choisissez --</option>
-      <option value="non">Non, il ne se lance pas</option>
-      <option value="oui">Oui, il se lance mais il y a un problème</option>
-    </select>
+<h1>🎼 Méta-Moteur Musical (v2 enrichi)</h1>
+<p>Recherchez partitions, accords, paroles et clips officiels à partir d'une œuvre.</p>
 
-    <label for="os">Système d'exploitation :</label>
-    <select id="os">
-      <option value="">-- Choisissez --</option>
-      <option value="windows">Windows</option>
-      <option value="macos">macOS</option>
-      <option value="linux">Linux</option>
-    </select>
+<input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon">
+<button onclick="generateLinks()">🔍 Rechercher</button>
+<p class="status" id="status"></p>
 
-    <label for="message">Message d'erreur ou description du problème :</label>
-    <textarea id="message" rows="4" placeholder="Décrivez ou saisissez le message d'erreur..."></textarea>
+<div id="results" class="results" style="display:none;"></div>
 
-    <button onclick="diagnostiquer()">Diagnostiquer</button>
-    <button onclick="startOCR()">📷 Lire depuis la caméra (OCR)</button>
+<script>
+async function generateLinks() {
+  const rawTitle = document.getElementById('songTitle').value.trim();
+  const statusDiv = document.getElementById('status');
+  const resultsDiv = document.getElementById('results');
+  if (!rawTitle) {
+    alert("Veuillez entrer un titre.");
+    return;
+  }
 
-    <video id="video" autoplay></video>
+  const title = rawTitle;
+  const encodedTitle = encodeURIComponent(title);
+  const wikiSlug = title.replaceAll(" ", "_");
+  resultsDiv.style.display = 'none';
+  resultsDiv.innerHTML = '';
+  statusDiv.textContent = '🔄 Recherche en cours...';
 
-    <div class="response" id="reponse" style="display:none;"></div>
+  const categories = {
+    "🎼 Partition (gratuite ou libre de droit)": [
+      { label: "IMSLP (classique)", url: `https://imslp.org/wiki/Special:Search/${encodedTitle}`, badge: "free" },
+      { label: "MuseScore", url: `https://musescore.com/sheetmusic?text=${encodedTitle}`, badge: "mixed" },
+      { label: "8notes", url: `https://www.8notes.com/search.asp?search=${encodedTitle}`, badge: "mixed" },
+      { label: "SheetMusicPlus", url: `https://www.sheetmusicplus.com/search?Ntt=${encodedTitle}`, badge: "paid" },
+      { label: "Free-scores.com", url: `https://www.free-scores.com/recherche-partitions.php?search=${encodedTitle}`, badge: "free" }
+    ],
+    "🎸 Accords / Lead Sheets": [
+      { label: "Ultimate Guitar", url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodedTitle}`, badge: "free" },
+      { label: "Chordify", url: `https://chordify.net/search/${encodedTitle}`, badge: "free" },
+      { label: "E-Chords", url: `https://www.e-chords.com/search/all/${encodedTitle}`, badge: "mixed" }
+    ],
+    "📝 Paroles": [
+      { label: "Genius", url: `https://genius.com/search?q=${encodedTitle}`, badge: "free" },
+      { label: "Paroles.net", url: `https://www.paroles.net/recherche?q=${encodedTitle}`, badge: "free" },
+      { label: "LyricsTranslate", url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodedTitle}`, badge: "free" }
+    ],
+    "🎧 Écoute / Clip officiel": [
+      { label: "YouTube (clip)", url: `https://www.youtube.com/results?search_query=${encodedTitle}+clip+officiel`, badge: "free" },
+      { label: "Spotify", url: `https://open.spotify.com/search/${encodedTitle}`, badge: "free" },
+      { label: "Deezer", url: `https://www.deezer.com/search/${encodedTitle}`, badge: "free" },
+      { label: "Qobuz (Hi-Res, payant)", url: `https://www.qobuz.com/fr-fr/search?q=${encodedTitle}`, badge: "paid" }
+    ],
+    "📚 Wikipédia / Contexte": [
+      { label: "Wikipédia (direct)", url: `https://fr.wikipedia.org/wiki/${wikiSlug}`, badge: "free", verify: true },
+      { label: "Wikipédia (recherche)", url: `https://www.google.com/search?q=site:fr.wikipedia.org+${encodedTitle}`, badge: "free" }
+    ]
+  };
 
-    <div class="history" id="historique">
-      <h3>Historique des diagnostics</h3>
-      <div id="history-list"></div>
-    </div>
+  let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
 
-    <div class="help">
-      <h3>📦 Fichier de diagnostic MuseScore</h3>
-      <p>Vous pouvez extraire des fichiers de log détaillés depuis MuseScore :</p>
-      <ol>
-        <li>Menu <strong>Aide</strong> → <strong>Diagnostic</strong> → <strong>Enregistrer les fichiers de diagnostic</strong></li>
-        <li>Un fichier <code>.zip</code> est généré</li>
-        <li>Vous pouvez l’analyser ou l’envoyer au support</li>
-      </ol>
-    </div>
-  </div>
-
-  <script>
-    let baseErreurs = [];
-
-    // Charger la base JSON depuis errors.json
-    fetch("errors.json")
-      .then(res => res.json())
-      .then(data => baseErreurs = data);
-
-    function diagnostiquer() {
-      const os = document.getElementById("os").value;
-      const startup = document.getElementById("startup").value;
-      const message = document.getElementById("message").value.toLowerCase();
-      const reponse = document.getElementById("reponse");
-      const history = document.getElementById("history-list");
-
-      let result = "Message non reconnu. Essayez de le reformuler ou d'envoyer les logs via MuseScore.";
-
-      for (const err of baseErreurs) {
-        const osMatch = err.os === "all" || err.os === os;
-        const typeMatch = (startup === "non" && err.type === "launch") || (startup === "oui" && err.type === "runtime");
-        const msgMatch = err.match.some(fragment => message.includes(fragment));
-        if (osMatch && typeMatch && msgMatch) {
-          result = err.solution;
-          break;
+  for (const [cat, links] of Object.entries(categories)) {
+    html += `<details class="category" open><summary><h3>${cat}</h3></summary>`;
+    for (const l of links) {
+      if (l.verify) {
+        try {
+          const res = await fetch(l.url, { method: 'HEAD' });
+          if (!res.ok) continue;
+        } catch (e) {
+          continue;
         }
       }
-
-      // Afficher
-      reponse.style.display = 'block';
-      reponse.innerText = result;
-
-      // Sauvegarder dans l’historique
-      const entry = { date: new Date().toLocaleString(), os, startup, message, result };
-      const historyData = JSON.parse(localStorage.getItem("history") || "[]");
-      historyData.unshift(entry);
-      localStorage.setItem("history", JSON.stringify(historyData));
-      afficherHistorique();
+      const badgeClass = l.badge === 'free' ? 'free' : (l.badge === 'paid' ? 'paid' : 'mixed');
+      const badgeLabel = l.badge === 'free' ? 'gratuit' : (l.badge === 'paid' ? 'payant' : 'mixte');
+      html += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
     }
+    html += `</details>`;
+  }
 
-    function afficherHistorique() {
-      const history = JSON.parse(localStorage.getItem("history") || "[]");
-      const historyDiv = document.getElementById("history-list");
-      historyDiv.innerHTML = "";
-      history.forEach(entry => {
-        const div = document.createElement("div");
-        div.className = "history-entry";
-        div.innerHTML = `<strong>${entry.date}</strong><br/>
-        <em>${entry.startup}, ${entry.os}</em><br/>
-        <strong>Message :</strong> ${entry.message}<br/>
-        <strong>Diagnostic :</strong> ${entry.result}`;
-        historyDiv.appendChild(div);
-      });
-    }
-
-    afficherHistorique();
-
-    // OCR via caméra
-    async function startOCR() {
-      const video = document.getElementById("video");
-      video.style.display = 'block';
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        alert("L'OCR sera intégré prochainement ici (version Flutter mobile déjà OK).");
-      } catch (e) {
-        alert("Impossible d'accéder à la caméra.");
-      }
-    }
-  </script>
+  resultsDiv.innerHTML = html;
+  resultsDiv.style.display = 'block';
+  statusDiv.textContent = '✅ Résultats prêts.';
+}
+</script>
 </body>
 </html>
