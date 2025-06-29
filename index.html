@@ -2,187 +2,139 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Méta-Moteur Musical (v2 enrichi)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MétaMusique</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    :root {
-      color-scheme: light dark;
-    }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f4;
-      color: #333;
-      margin: 0;
-      padding: 2em;
+      font-family: system-ui, sans-serif;
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      color: #222;
     }
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #121212;
-        color: #ddd;
-      }
-      .results {
-        background: #1e1e1e;
-        color: #ddd;
-      }
-      a { color: #90caf9; }
+    h1, h2, h3 {
+      color: #444;
     }
-    h1 { color: #2c3e50; }
-    input, button {
-      font-size: 1em;
-      padding: 0.7em;
-      margin: 0.5em 0;
+    input[type="text"] {
       width: 100%;
-      max-width: 500px;
-      box-sizing: border-box;
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-bottom: 1rem;
     }
     button {
-      background-color: #3498db;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background-color: #007acc;
       color: white;
       border: none;
+      border-radius: 4px;
       cursor: pointer;
     }
-    button:hover { background-color: #2980b9; }
-    .results {
-      margin-top: 2em;
-      background: white;
-      padding: 1em;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    button:hover {
+      background-color: #005fa3;
     }
-    .category {
-      margin-top: 1em;
+    ul {
+      list-style: none;
+      padding: 0;
     }
-    .category h3 {
-      margin-bottom: 0.3em;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 0.3em;
+    li {
+      margin-bottom: 1rem;
     }
     a {
-      display: block;
-      margin: 5px 0;
-      color: #2c3e50;
+      color: #007acc;
       text-decoration: none;
-      word-wrap: break-word;
     }
     a:hover {
       text-decoration: underline;
     }
-    .badge {
-      font-size: 0.8em;
-      margin-left: 6px;
-      padding: 2px 6px;
-      border-radius: 4px;
+    img {
+      margin-top: 0.5rem;
+      max-height: 80px;
     }
-    .free { background: #2ecc71; color: white; }
-    .paid { background: #e67e22; color: white; }
-    .mixed { background: #f1c40f; color: #333; }
-    .status { font-size: 0.9em; color: #888; margin-bottom: 1em; }
-
-    @media (max-width: 600px) {
-      body {
-        padding: 1em;
-      }
-      input, button {
-        font-size: 1em;
-        padding: 0.6em;
-        width: 100%;
-        max-width: 100%;
-      }
-      h1 {
-        font-size: 1.5em;
-        text-align: center;
-      }
-      .results {
-        padding: 0.8em;
-      }
-      .category h3 {
-        font-size: 1em;
-      }
+    .results {
+      margin-top: 2rem;
     }
   </style>
 </head>
 <body>
+  <h1>🎵 MétaMusique</h1>
+  <p>Recherchez une œuvre ou une chanson pour trouver partitions, accords et paroles.</p>
 
-<h1>🎼 Méta-Moteur Musical (v2 enrichi)</h1>
-<p>Recherchez partitions, accords, paroles et clips officiels à partir d'une œuvre.</p>
+  <input type="text" id="songTitle" placeholder="Ex : Imagine, Clair de lune, Bella ciao">
+  <button onclick="generateLinks()">Rechercher</button>
 
-<input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon">
-<button onclick="generateLinks()">🔍 Rechercher</button>
-<p class="status" id="status"></p>
+  <div id="results" class="results"></div>
+  <div id="history" class="results"></div>
 
-<div id="results" class="results" style="display:none;"></div>
+  <script>
+    function generateLinks() {
+      const title = document.getElementById("songTitle").value.trim();
+      if (!title) return;
+      saveToHistory(title);
 
-<script>
-async function generateLinks() {
-  const rawTitle = document.getElementById('songTitle').value.trim();
-  const statusDiv = document.getElementById('status');
-  const resultsDiv = document.getElementById('results');
-  if (!rawTitle) {
-    alert("Veuillez entrer un titre.");
-    return;
-  }
+      const encoded = encodeURIComponent(title);
 
-  const title = rawTitle;
-  const encodedTitle = encodeURIComponent(title);
-  const wikiSlug = title.replaceAll(" ", "_");
-  resultsDiv.style.display = 'none';
-  resultsDiv.innerHTML = '';
-  statusDiv.textContent = '🔄 Recherche en cours...';
+      const sources = {
+        "Partitions (IMSLP, MuseScore…)":
+          `https://www.google.com/search?q=${encoded}+site:imslp.org+OR+site:musescore.com+OR+site:8notes.com+filetype:pdf`,
+        "Accords / Tablature":
+          `https://www.google.com/search?q=${encoded}+site:ultimate-guitar.com+OR+site:la-boite-a-chansons.fr`,
+        "Paroles":
+          `https://www.google.com/search?q=${encoded}+paroles+site:paroles.net+OR+site:genius.com+OR+site:lyrics.com`,
+        "Aperçu (Images de partitions)":
+          `https://www.google.com/search?tbm=isch&q=${encoded}+partition`
+      };
 
-  const categories = {
-    "🎼 Partition (gratuite ou libre de droit)": [
-      { label: "IMSLP (classique)", url: `https://imslp.org/wiki/Special:Search/${encodedTitle}`, badge: "free" },
-      { label: "MuseScore", url: `https://musescore.com/sheetmusic?text=${encodedTitle}`, badge: "mixed" },
-      { label: "8notes", url: `https://www.8notes.com/search.asp?search=${encodedTitle}`, badge: "mixed" },
-      { label: "SheetMusicPlus", url: `https://www.sheetmusicplus.com/search?Ntt=${encodedTitle}`, badge: "paid" },
-      { label: "Free-scores.com", url: `https://www.free-scores.com/recherche-partitions.php?search=${encodedTitle}`, badge: "free" }
-    ],
-    "🎸 Accords / Lead Sheets": [
-      { label: "Ultimate Guitar", url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodedTitle}`, badge: "free" },
-      { label: "Chordify", url: `https://chordify.net/search/${encodedTitle}`, badge: "free" },
-      { label: "E-Chords", url: `https://www.e-chords.com/search/all/${encodedTitle}`, badge: "mixed" }
-    ],
-    "📝 Paroles": [
-      { label: "Genius", url: `https://genius.com/search?q=${encodedTitle}`, badge: "free" },
-      { label: "Paroles.net", url: `https://www.paroles.net/recherche?q=${encodedTitle}`, badge: "free" },
-      { label: "LyricsTranslate", url: `https://www.google.com/search?q=site:lyricstranslate.com+${encodedTitle}`, badge: "free" }
-    ],
-    "🎧 Écoute / Clip officiel": [
-      { label: "YouTube (clip)", url: `https://www.youtube.com/results?search_query=${encodedTitle}+clip+officiel`, badge: "free" },
-      { label: "Spotify", url: `https://open.spotify.com/search/${encodedTitle}`, badge: "free" },
-      { label: "Deezer", url: `https://www.deezer.com/search/${encodedTitle}`, badge: "free" },
-      { label: "Qobuz (Hi-Res, payant)", url: `https://www.qobuz.com/fr-fr/search?q=${encodedTitle}`, badge: "paid" }
-    ],
-    "📚 Wikipédia / Contexte": [
-      { label: "Wikipédia (direct)", url: `https://fr.wikipedia.org/wiki/${wikiSlug}`, badge: "free", verify: true },
-      { label: "Wikipédia (recherche)", url: `https://www.google.com/search?q=site:fr.wikipedia.org+${encodedTitle}`, badge: "free" }
-    ]
-  };
-
-  let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
-
-  for (const [cat, links] of Object.entries(categories)) {
-    html += `<details class="category" open><summary><h3>${cat}</h3></summary>`;
-    for (const l of links) {
-      if (l.verify) {
-        try {
-          const res = await fetch(l.url, { method: 'HEAD' });
-          if (!res.ok) continue;
-        } catch (e) {
-          continue;
+      let html = `<h2>Résultats pour : "${title}"</h2><ul>`;
+      for (const [label, url] of Object.entries(sources)) {
+        if (label.includes("Images")) {
+          html += `<li><strong>${label}</strong><br>
+            <a href="${url}" target="_blank">
+              <img src="https://www.google.com/s2/favicons?sz=32&domain=google.com" 
+                   alt="aperçu image" style="height:80px; border:1px solid #ccc;">
+              Voir des images
+            </a></li>`;
+        } else {
+          html += `<li><a href="${url}" target="_blank">${label}</a></li>`;
         }
       }
-      const badgeClass = l.badge === 'free' ? 'free' : (l.badge === 'paid' ? 'paid' : 'mixed');
-      const badgeLabel = l.badge === 'free' ? 'gratuit' : (l.badge === 'paid' ? 'payant' : 'mixte');
-      html += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+      html += "</ul>";
+      document.getElementById("results").innerHTML = html;
     }
-    html += `</details>`;
-  }
 
-  resultsDiv.innerHTML = html;
-  resultsDiv.style.display = 'block';
-  statusDiv.textContent = '✅ Résultats prêts.';
-}
-</script>
+    function saveToHistory(title) {
+      let history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+      if (!history.includes(title)) {
+        history.unshift(title);
+        history = history.slice(0, 10);
+        localStorage.setItem("searchHistory", JSON.stringify(history));
+        renderHistory();
+      }
+    }
+
+    function renderHistory() {
+      const container = document.getElementById("history");
+      const history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+      if (history.length === 0) {
+        container.innerHTML = "<p>Aucune recherche récente</p>";
+        return;
+      }
+      container.innerHTML = "<h3>Recherches récentes</h3>";
+      history.forEach(title => {
+        const link = document.createElement("a");
+        link.href = "#";
+        link.innerText = title;
+        link.onclick = () => {
+          document.getElementById("songTitle").value = title;
+          generateLinks();
+        };
+        container.appendChild(link);
+        container.appendChild(document.createElement("br"));
+      });
+    }
+
+    window.onload = renderHistory;
+  </script>
 </body>
 </html>
