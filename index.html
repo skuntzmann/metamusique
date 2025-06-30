@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<meta name="theme-color" content="#3498db">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log("✅ Service Worker enregistré"))
+      .catch(e => console.error("❌ Service Worker échec:", e));
+  }
+</script>
+
   <meta charset="UTF-8">
   <title>MétaMusique</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
