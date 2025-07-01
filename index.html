@@ -5,9 +5,8 @@
   <title>Méta-Moteur Musical</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
-<link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48.png">
-<link rel="manifest" href="manifest.webmanifest">
-
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#3498db">
   <style>
     :root {
@@ -175,21 +174,19 @@
         { label: "Genius", url: `https://genius.com/search?q=${encodedTitle}`, badge: "free" },
         { label: "Paroles.net", url: `https://www.paroles.net/recherche?q=${encodedTitle}`, badge: "free" }
       ],
-      "🖼️ Google Images (partitions)", url: `https://www.google.com/search?tbm=isch&q=${encodedTitle}+partition`
+      "🖼️ Google Images (partitions)": [
+        { label: "Voir les images", url: `https://www.google.com/search?tbm=isch&q=${encodedTitle}+partition`, badge: "free" }
+      ]
     };
 
     let html = `<h2>Résultats pour : <em>${title}</em></h2>`;
 
     for (const [cat, links] of Object.entries(categories)) {
       html += `<details class="category" open><summary><h3>${cat}</h3></summary>`;
-      if (Array.isArray(links)) {
-        for (const l of links) {
-          const badgeClass = l.badge === 'free' ? 'free' : (l.badge === 'paid' ? 'paid' : 'mixed');
-          const badgeLabel = l.badge === 'free' ? 'gratuit' : (l.badge === 'paid' ? 'payant' : 'mixte');
-          html += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
-        }
-      } else {
-        html += `<a href="${links}" target="_blank">Voir les images <span class="badge free">gratuit</span></a>`;
+      for (const l of links) {
+        const badgeClass = l.badge === 'free' ? 'free' : (l.badge === 'paid' ? 'paid' : 'mixed');
+        const badgeLabel = l.badge === 'free' ? 'gratuit' : (l.badge === 'paid' ? 'payant' : 'mixte');
+        html += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
       }
       html += `</details>`;
     }
@@ -207,5 +204,6 @@
       .catch(err => console.error('❌ Erreur SW', err));
   }
 </script>
+
 </body>
 </html>
