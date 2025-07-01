@@ -89,6 +89,13 @@
     .history a {
       font-size: 0.9em;
     }
+    iframe {
+      width: 100%;
+      height: 240px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
     @media (max-width: 600px) {
       body {
         padding: 1em;
@@ -108,6 +115,9 @@
       }
       .category h3 {
         font-size: 1em;
+      }
+      iframe {
+        height: 180px;
       }
     }
   </style>
@@ -174,8 +184,9 @@
         { label: "Genius", url: `https://genius.com/search?q=${encodedTitle}`, badge: "free" },
         { label: "Paroles.net", url: `https://www.paroles.net/recherche?q=${encodedTitle}`, badge: "free" }
       ],
-      "🖼️ Google Images (partitions)": [
-        { label: "Voir les images", url: `https://www.google.com/search?tbm=isch&q=${encodedTitle}+partition`, badge: "free" }
+      "🖼️ Images (partition + titre)": [
+        { label: "Voir sur Google Images", url: `https://www.google.com/search?tbm=isch&q=${encodedTitle}+partition`, badge: "free" },
+        { label: "Aperçu via Bing", url: `https://www.bing.com/images/search?q=${encodedTitle}+partition`, badge: "free", preview: `https://www.bing.com/images/search?q=${encodedTitle}+partition&form=HDRSC2` }
       ]
     };
 
@@ -187,6 +198,9 @@
         const badgeClass = l.badge === 'free' ? 'free' : (l.badge === 'paid' ? 'paid' : 'mixed');
         const badgeLabel = l.badge === 'free' ? 'gratuit' : (l.badge === 'paid' ? 'payant' : 'mixte');
         html += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${badgeClass}">${badgeLabel}</span></a>`;
+        if (l.preview) {
+          html += `<iframe src="${l.preview}" loading="lazy"></iframe>`;
+        }
       }
       html += `</details>`;
     }
@@ -204,6 +218,5 @@
       .catch(err => console.error('❌ Erreur SW', err));
   }
 </script>
-
 </body>
 </html>
