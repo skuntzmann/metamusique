@@ -1,12 +1,26 @@
 {
   "name": "Méta-Moteur Musical",
   "short_name": "MétaMusique",
-  "start_url": ".",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f4f4",
   "theme_color": "#3498db",
-  "description": "Recherchez des partitions, accords et paroles facilement.",
   "icons": [
+    {
+      "src": "icons/icon-48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
