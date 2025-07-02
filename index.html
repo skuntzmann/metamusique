@@ -1,73 +1,100 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>NOTA</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
-  <link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48.png">
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#3498db">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#3498db" />
   <style>
-    /* styles simplifiés pour lisibilité */
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 2em; background: #f4f4f4; color: #333; }
-    input, button { width: 100%; max-width: 500px; padding: 0.7em; margin: 0.5em 0; }
-    .results { margin-top: 2em; background: white; padding: 1em; border-radius: 8px; }
-    a { display: block; margin: 5px 0; color: #2c3e50; text-decoration: none; }
-    .badge { font-size: 0.8em; margin-left: 6px; padding: 2px 6px; border-radius: 4px; }
-    .free { background: #2ecc71; color: white; }
-    .category img { height: 100px; margin: 4px; border-radius: 6px; }
+    body { font-family: Arial,sans-serif; padding:2em; margin:0; background:#f4f4f4; color:#333; }
+    input,button { width:100%;max-width:500px;padding:0.7em;margin:0.5em 0; }
+    button { background:#3498db;color:#fff;border:none;cursor:pointer; }
+    button:hover { background:#2980b9; }
+    .results { margin-top:2em;background:#fff;padding:1em;border-radius:8px; }
+    .category { margin-top:1em; }
+    a { display:block;margin:5px 0;color:#3498db;text-decoration:none; }
+    .thumbnails { display:flex;flex-wrap:wrap;gap:8px;margin:8px 0; }
+    .thumbnails img { width:100px;height:100px;object-fit:cover;border-radius:4px; }
+    .status { font-style:italic;color:#555; }
   </style>
 </head>
 <body>
+
 <h1>🎼 NOTA</h1>
-<p>Recherchez des partitions, accords, tablatures ou paroles.</p>
-<input type="text" id="songTitle" placeholder="Exemple : Imagine de John Lennon">
+<p>Recherche partitions, tablatures, paroles et aperçu visuel</p>
+<input type="text" id="songTitle" placeholder="Ex: Imagine de John Lennon">
 <button onclick="generateLinks()">🔍 Rechercher</button>
+<p class="status" id="status"></p>
 <div id="results" class="results" style="display:none;"></div>
+
 <script>
-async function generateLinks() {
-  const rawTitle = document.getElementById('songTitle').value.trim();
-  const encodedTitle = encodeURIComponent(rawTitle);
-  const resultsDiv = document.getElementById('results');
-  if (!rawTitle) return alert("Veuillez entrer un titre.");
-  resultsDiv.innerHTML = '<p>Chargement...</p>';
-  resultsDiv.style.display = 'block';
-  const categories = {
-    "🎼 Partitions / Accords / Tablatures": [
-      { label: "IMSLP", url: `https://imslp.org/wiki/Special:Search/${encodedTitle}`, badge: "free" },
-      { label: "MuseScore", url: `https://musescore.com/sheetmusic?text=${encodedTitle}`, badge: "mixed" },
-      { label: "Free-scores.com", url: `https://www.free-scores.com/recherche-partitions.php?search=${encodedTitle}`, badge: "free" },
-      { label: "Ultimate Guitar", url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodedTitle}`, badge: "mixed" }
-    ],
-    "📝 Paroles": [
-      { label: "Genius", url: `https://genius.com/search?q=${encodedTitle}`, badge: "free" },
-      { label: "Paroles.net", url: `https://www.paroles.net/recherche?q=${encodedTitle}`, badge: "free" }
-    ]
-  };
-  let html = `<h2>Résultats pour : <em>${rawTitle}</em></h2>`;
-  for (const [cat, links] of Object.entries(categories)) {
-    html += `<div class="category"><h3>${cat}</h3>`;
-    links.forEach(l => {
-      html += `<a href="${l.url}" target="_blank">${l.label} <span class="badge ${l.badge}">${l.badge === 'free' ? 'gratuit' : 'mixte'}</span></a>`;
-    });
-    html += `</div>`;
+  async function fetchThumbnails(query) {
+    const url = 'https://corsproxy.io/?' + encodeURIComponent(`https://www.bing.com/images/search?q=${encodeURIComponent(query+' partition')}`);
+    try {
+      const resp = await fetch(url);
+      const text = await resp.text();
+      const srcs = [...text.matchAll(/<img[^>]+src="([^"]+)"/g)].slice(0,4).map(m=>m[1]);
+      return srcs;
+    } catch (e) {
+      console.warn("Miniatures Bing échouées", e);
+      return [];
+    }
   }
 
-  // Bing thumbnails + Google Images
-  const imgReq = await fetch(`https://api.contextualwebsearch.com/api/Search/ImageSearchAPI?q=${encodedTitle}+partition&count=4&autoCorrect=true`, {
-    headers: { "X-RapidAPI-Key": "demo" }  // Remplacer avec une clé valide si disponible
-  });
-  const imgData = await imgReq.json().catch(() => null);
-  html += `<div class="category"><h3>🖼️ Aperçu visuel (via Bing)</h3>`;
-  if (imgData && imgData.value) {
-    imgData.value.forEach(img => {
-      html += `<a href="${img.url}" target="_blank"><img src="${img.thumbnail}" alt="aperçu"></a>`;
+  async function generateLinks() {
+    const title = document.getElementById('songTitle').value.trim();
+    const status = document.getElementById('status');
+    const results = document.getElementById('results');
+
+    if(!title) { alert("Veuillez saisir un titre"); return; }
+    status.textContent = "🔄 Chargement…";
+    results.style.display = 'block';
+    results.innerHTML = "";
+
+    const enc = encodeURIComponent(title);
+    const thumbs = await fetchThumbnails(title);
+
+    let html = `<h2>Résultats pour « ${title} »</h2>`;
+
+    // Partitions / accords
+    html += `<div class="category"><strong>Partitions / Accords</strong>`;
+    [
+      ['IMSLP', `https://imslp.org/wiki/Special:Search/${enc}`],
+      ['MuseScore', `https://musescore.com/sheetmusic?text=${enc}`],
+      ['Free-scores.com', `https://www.free-scores.com/recherche-partitions.php?search=${enc}`],
+      ['Ultimate Guitar', `https://www.ultimate-guitar.com/search.php?search_type=title&value=${enc}`]
+    ].forEach(([label, url]) => {
+      html += `<a href="${url}" target="_blank">${label}</a>`;
     });
+    html += `</div>`;
+
+    // Paroles
+    html += `<div class="category"><strong>Paroles</strong>`;
+    [
+      ['Genius', `https://genius.com/search?q=${enc}`],
+      ['Paroles.net', `https://www.paroles.net/recherche?q=${enc}`]
+    ].forEach(([label, url]) => {
+      html += `<a href="${url}" target="_blank">${label}</a>`;
+    });
+    html += `</div>`;
+
+    // Thumbnails
+    html += `<div class="category"><strong>Aperçu visuel (Bing)</strong>`;
+    if (thumbs.length) {
+      html += `<div class="thumbnails">` +
+        thumbs.map(src => `<a href="https://www.bing.com/images/search?q=${enc}+partition" target="_blank"><img src="${src}" loading="lazy"></a>`).join('') +
+        `</div>`;
+    }
+    html += `<a href="https://www.google.com/search?tbm=isch&q=${enc}+partition" target="_blank">Voir plus sur Google Images</a>`;
+    html += `</div>`;
+
+    results.innerHTML = html;
+    status.textContent = "✅ Terminé";
   }
-  html += `<a href="https://www.google.com/search?tbm=isch&q=${encodedTitle}+partition" target="_blank">Voir sur Google Images</a></div>`;
-  resultsDiv.innerHTML = html;
-}
 </script>
+
 </body>
 </html>
