@@ -32,17 +32,21 @@
 
 <script>
   async function fetchThumbnails(query) {
-    const url = 'https://corsproxy.io/?' + encodeURIComponent(`https://www.bing.com/images/search?q=${encodeURIComponent(query+' partition')}`);
-    try {
-      const resp = await fetch(url);
-      const text = await resp.text();
-      const srcs = [...text.matchAll(/<img[^>]+src="([^"]+)"/g)].slice(0,4).map(m=>m[1]);
-      return srcs;
-    } catch (e) {
-      console.warn("Miniatures Bing échouées", e);
-      return [];
-    }
+  const encoded = encodeURIComponent(query + ' partition');
+  const url = `https://corsproxy.io/?https://www.bing.com/images/search?q=${encoded}&form=IRFLTR&first=1&tsc=ImageHoverTitle`;
+
+  try {
+    const resp = await fetch(url);
+    const text = await resp.text();
+    const matches = [...text.matchAll(/"murl":"(.*?)"/g)];
+    const urls = matches.slice(0, 4).map(m => m[1].replace(/\\u002f/g, '/'));
+    return urls;
+  } catch (err) {
+    console.error("Erreur miniatures Bing :", err);
+    return [];
   }
+}
+
 
   async function generateLinks() {
     const title = document.getElementById('songTitle').value.trim();
